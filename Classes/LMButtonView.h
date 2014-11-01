@@ -15,6 +15,6 @@
 
 @property uint32_t button;
 
-- (id)initWithFrame:(CGRect)frame border:(CGFloat)border radius:(CGFloat)radius;
+- (id)init:(int)buttonMap;
 
 @end

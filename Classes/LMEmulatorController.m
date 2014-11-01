@@ -520,7 +520,7 @@ typedef enum _LMEmulatorAlert
 
 - (UIImage*)getScreen
 {
-  UIImage *image = (_externalEmulator != nil)?[_externalEmulator getScreen]:[UIImage imageWithCGImage:(CGImageRef)_customView.screenView.layer.contents];
+  UIImage *image = (_externalEmulator != nil)?[_externalEmulator getScreen]:[UIImage imageWithCGImage:(CGImageRef)_customView.pixelView.layer.contents];
   CGRect rect = CGRectMake(floor((image.size.width-256)/2), floor((image.size.height-224)/2), 256, 224);
   CGImageRef clip = CGImageCreateWithImageInRect(image.CGImage,rect);
   UIImage *image2 = [UIImage imageWithCGImage:clip];

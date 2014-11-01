@@ -32,7 +32,8 @@ typedef enum _LMEmulatorControllerViewMode
   unsigned char* _565ImageBuffer;
   
   // screen
-  LMPixelView* _screenView;
+  UIView* _screenView;
+  LMPixelView* _pixelView;
   
   // start / select
   LMButtonView* _startButton;
@@ -52,6 +53,10 @@ typedef enum _LMEmulatorControllerViewMode
   
   UIButton* _optionsButton;
   
+  UIView* _menuView;
+  UIView* _leftButtonView;
+  UIView* _rightButtonView;
+  
   BOOL _hideUI;
   
   LMEmulatorControllerViewMode _viewMode;
@@ -60,7 +65,7 @@ typedef enum _LMEmulatorControllerViewMode
 @property (readonly) UIButton* optionsButton;
 @property (readonly) LMBTControllerView* iCadeControlView;
 @property (nonatomic) LMEmulatorControllerViewMode viewMode;
-@property (readonly) LMPixelView* screenView;
+@property (readonly) LMPixelView* pixelView;
 
 - (void)setControlsHidden:(BOOL)value animated:(BOOL)animated;
 - (void)setMinMagFilter:(NSString*)filter;
