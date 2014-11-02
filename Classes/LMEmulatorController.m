@@ -213,14 +213,17 @@ typedef enum _LMEmulatorAlert
   else if(buttonIndex == loadIndex)
   {
     SISetEmulationPaused(1);
+    SIWaitForPause();
     SILoadCheatFile();
     SISetEmulationPaused(0);
+    _customView.iCadeControlView.active = YES;
   }
   else if(buttonIndex == saveIndex)
   {
     SISetEmulationPaused(1);
     SIWaitForPause();
     [LMSaveManager saveStateForROMNamed:_romFileName slot:[[NSString stringWithFormat:@"%ld", (long)[[NSDate date] timeIntervalSince1970]] intValue] screenshot:[self getScreen]];
+    _customView.iCadeControlView.active = YES;
     SISetEmulationPaused(0);
   }
   else if(buttonIndex == settingsIndex)
@@ -233,6 +236,7 @@ typedef enum _LMEmulatorAlert
     NSArray *items = [NSArray arrayWithObjects:image, nil];
     UIActivityViewController *activityView = [[[UIActivityViewController alloc] initWithActivityItems:items applicationActivities:nil] autorelease];
     void (^completionHandler)(NSString *_activityType, BOOL _completed) = ^(NSString *_activityType, BOOL _completed){
+      _customView.iCadeControlView.active = YES;
       SISetEmulationPaused(0);
     };
     activityView.completionHandler = completionHandler;
