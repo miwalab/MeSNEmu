@@ -266,13 +266,13 @@
     _screenView.frame = (CGRect){(int)((size.width-screenViewSize.width)*0.5),0,screenViewSize};
     
     int boffset = (int)((((size.width-_screenView.frame.size.width)*0.5)-_leftButtonView.frame.size.width)*0.5);
-    int moffset = (int)((((size.width-_screenView.frame.size.width)*0.5)-_menuView.frame.size.width)*0.5);
     screenBorderX = (boffset>=10) ? boffset : 10;
     screenBorderY = 20;
     buttonSpacing = 12;
     
     bcolor = blackColor;
-    _menuView.frame = (CGRect){0,0,_optionsButton.frame.size.width,_optionsButton.frame.size.height+_startButton.frame.size.height+_selectButton.frame.size.height+20};
+    _menuView.frame = (CGRect){0,0,_optionsButton.frame.size.width,_optionsButton.frame.size.height+_startButton.frame.size.height+_selectButton.frame.size.height+buttonSpacing*2};
+    int moffset = (int)((((size.width-_screenView.frame.size.width)*0.5)-_menuView.frame.size.width)*0.5);
     _menuView.frame = (CGRect){(moffset>=screenBorderX)?moffset:screenBorderX,screenBorderY,_menuView.frame.size};
     _optionsButton.frame = (CGRect){0,0,_optionsButton.frame.size};
     _startButton.frame = (CGRect){0,_optionsButton.frame.origin.y+_optionsButton.frame.size.height+buttonSpacing,_startButton.frame.size};
