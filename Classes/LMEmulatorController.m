@@ -215,8 +215,8 @@ typedef enum _LMEmulatorAlert
     SISetEmulationPaused(1);
     SIWaitForPause();
     SILoadCheatFile();
-    SISetEmulationPaused(0);
     _customView.iCadeControlView.active = YES;
+    SISetEmulationPaused(0);
   }
   else if(buttonIndex == saveIndex)
   {

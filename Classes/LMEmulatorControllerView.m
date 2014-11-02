@@ -242,11 +242,11 @@
     }
     
     bcolor = plasticColor;
-    _menuView.frame = (CGRect){0,0,_selectButton.frame.size.width+_startButton.frame.size.width+_optionsButton.frame.size.width+buttonSpacing*2,_selectButton.frame.size.height};
+    _menuView.frame = (CGRect){0,0,_optionsButton.frame.size.width+_startButton.frame.size.width+_selectButton.frame.size.width+buttonSpacing*2,_optionsButton.frame.size.height};
     _menuView.frame = (CGRect){(size.width-_menuView.frame.size.width)*0.5,_screenView.frame.origin.y+_screenView.frame.size.height+screenBorderY,_menuView.frame.size};
-    _selectButton.frame = (CGRect){0,0,_selectButton.frame.size};
-    _startButton.frame = (CGRect){_selectButton.frame.origin.x+_selectButton.frame.size.width+buttonSpacing,_selectButton.frame.origin.y,_startButton.frame.size};
-    _optionsButton.frame = (CGRect){_startButton.frame.origin.x+_startButton.frame.size.width+buttonSpacing,_selectButton.frame.origin.y,_optionsButton.frame.size};
+    _optionsButton.frame = (CGRect){0,0,_optionsButton.frame.size};
+    _startButton.frame = (CGRect){_optionsButton.frame.origin.x+_optionsButton.frame.size.width+buttonSpacing,_optionsButton.frame.origin.y,_startButton.frame.size};
+    _selectButton.frame = (CGRect){_startButton.frame.origin.x+_startButton.frame.size.width+buttonSpacing,_optionsButton.frame.origin.y,_selectButton.frame.size};
     
     [_optionsButton portrait];
     [_startButton portrait];
@@ -272,11 +272,11 @@
     buttonSpacing = 12;
     
     bcolor = blackColor;
-    _menuView.frame = (CGRect){0,0,_selectButton.frame.size.width,_selectButton.frame.size.height+_startButton.frame.size.height+_optionsButton.frame.size.height+20};
+    _menuView.frame = (CGRect){0,0,_optionsButton.frame.size.width,_optionsButton.frame.size.height+_startButton.frame.size.height+_selectButton.frame.size.height+20};
     _menuView.frame = (CGRect){(moffset>=screenBorderX)?moffset:screenBorderX,screenBorderY,_menuView.frame.size};
-    _selectButton.frame = (CGRect){0,0,_selectButton.frame.size};
-    _startButton.frame = (CGRect){0,_selectButton.frame.origin.y+_selectButton.frame.size.height+buttonSpacing,_startButton.frame.size};
-    _optionsButton.frame = (CGRect){0,_startButton.frame.origin.y+_startButton.frame.size.height+buttonSpacing,_optionsButton.frame.size};
+    _optionsButton.frame = (CGRect){0,0,_optionsButton.frame.size};
+    _startButton.frame = (CGRect){0,_optionsButton.frame.origin.y+_optionsButton.frame.size.height+buttonSpacing,_startButton.frame.size};
+    _selectButton.frame = (CGRect){0,_startButton.frame.origin.y+_startButton.frame.size.height+buttonSpacing,_selectButton.frame.size};
     
     [_optionsButton landscape];
     [_startButton landscape];
@@ -288,6 +288,11 @@
     [_yButton landscape];
     [_aButton landscape];
     [_bButton landscape];
+    
+    if(fullScreen == YES && _hideUI == YES)
+    {
+      controlsAlpha = 0;
+    }
   }
   
   if(fullScreen == YES)
@@ -311,25 +316,23 @@
   
   if(_viewMode == LMEmulatorControllerViewModeScreenOnly)
   {
-    _menuView.alpha = 0;
     _pixelView.alpha = 1.0;
     controlsAlpha = 0;
     bcolor = blackColor;
   }
   else if(_viewMode == LMEmulatorControllerViewModeControllerOnly)
   {
-    _menuView.alpha = 1.0;
     _pixelView.alpha = 0;
     controlsAlpha = 1.0;
-    bcolor = plasticColor;
   }
   else
   {
-    _menuView.alpha = controlsAlpha;
     _pixelView.alpha = 1.0;
   }
   
   self.backgroundColor = bcolor;
+  _startButton.alpha = controlsAlpha;
+  _selectButton.alpha = controlsAlpha;
   _leftButtonView.alpha = controlsAlpha;
   _rightButtonView.alpha = controlsAlpha;
   
