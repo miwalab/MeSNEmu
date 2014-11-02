@@ -122,14 +122,14 @@ const CGFloat kDPadMidw = (kDPadMaxw-kDPadMinw)/2;
   self = [super init];
   if(self)
   {
-    CGFloat border = 0.0;
-    
     self.frame = CGRectMake(0, 0, kDPadMaxw, kDPadMaxw);
     
+    //landscape
+    CGFloat border = 0.0;
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(kDPadMaxw, kDPadMaxw), NO, self.currentImage.scale);
     CGContextRef context = UIGraphicsGetCurrentContext();
-    CGContextSetRGBFillColor(context, 255/255.0, 255/255.0, 255/255.0, 1.0);
-    CGContextSetRGBStrokeColor(context, 255/255.0, 255/255.0, 255/255.0, 1.0);
+    CGContextSetRGBFillColor(context, 80/255.0, 80/255.0, 80/255.0, 0.9);
+    CGContextSetRGBStrokeColor(context, 80/255.0, 80/255.0, 80/255.0, 1.0);
     CGContextSetLineWidth(context, border);
     
     CGRect rrect = CGRectMake(0, 0, kDPadMaxw, kDPadMaxw);
@@ -153,13 +153,50 @@ const CGFloat kDPadMidw = (kDPadMaxw-kDPadMinw)/2;
     CGContextDrawPath(context, kCGPathFillStroke);
     CGContextFillPath(context);
     
-    [self setImage:UIGraphicsGetImageFromCurrentImageContext() forState:UIControlStateNormal];
+    _landscapeImage = [UIGraphicsGetImageFromCurrentImageContext() retain];
+    
+    UIGraphicsEndImageContext();
+    
+    //portrait
+    border = 0.0;
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(kDPadMaxw, kDPadMaxw), NO, self.currentImage.scale);
+    CGContextRef context2 = UIGraphicsGetCurrentContext();
+    CGContextSetRGBFillColor(context2, 255/255.0, 255/255.0, 255/255.0, 1.0);
+    CGContextSetRGBStrokeColor(context2, 255/255.0, 255/255.0, 255/255.0, 1.0);
+    CGContextSetLineWidth(context2, border);
+    
+    CGContextMoveToPoint(context2, kDPadMidw, kDPadMidw);
+    CGContextAddArcToPoint(context2, kDPadMidw, miny, midx, miny, radius);
+    CGContextAddArcToPoint(context2, maxx-kDPadMidw, miny, maxx-kDPadMidw, kDPadMidw, radius);
+    CGContextAddLineToPoint(context2, maxx-kDPadMidw, kDPadMidw);
+    CGContextAddArcToPoint(context2, maxx, kDPadMidw, maxx, midy, radius);
+    CGContextAddArcToPoint(context2, maxx, maxy-kDPadMidw, maxx-kDPadMidw, maxy-kDPadMidw, radius);
+    CGContextAddLineToPoint(context2, maxx-kDPadMidw, maxy-kDPadMidw);
+    CGContextAddArcToPoint(context2, maxx-kDPadMidw, maxy, midx, maxy, radius);
+    CGContextAddArcToPoint(context2, kDPadMidw, maxy, kDPadMidw, maxy-kDPadMidw, radius);
+    CGContextAddLineToPoint(context2, kDPadMidw, maxy-kDPadMidw);
+    CGContextAddArcToPoint(context2, minx, maxy-kDPadMidw, minx, midy, radius);
+    CGContextAddArcToPoint(context2, minx, kDPadMidw, kDPadMidw, kDPadMidw, radius);
+    CGContextClosePath(context2);
+    CGContextDrawPath(context2, kCGPathFillStroke);
+    CGContextFillPath(context2);
+    
+    _portraitImage = [UIGraphicsGetImageFromCurrentImageContext() retain];
     
     UIGraphicsEndImageContext();
     
     [self addTarget:self action:@selector(handleTouches:forEvent:) forControlEvents:UIControlEventAllEvents];
   }
   return self;
+}
+
+- (void)portrait
+{
+  [self setImage:_portraitImage forState:UIControlStateNormal];
+}
+- (void)landscape
+{
+  [self setImage:_landscapeImage forState:UIControlStateNormal];
 }
 
 @end

@@ -208,7 +208,7 @@
   BOOL fullScreen = [[NSUserDefaults standardUserDefaults] boolForKey:kLMSettingsFullScreen];
   
   UIColor* plasticColor = [UIColor colorWithRed:200/255.0 green:200/255.0 blue:200/255.0 alpha:1.0];
-  UIColor* blackColor = [UIColor colorWithRed:20/255.0 green:20/255.0 blue:20/255.0 alpha:1.0];
+  UIColor* blackColor = [UIColor colorWithRed:100/255.0 green:100/255.0 blue:100/255.0 alpha:1.0];
   UIColor* bcolor = plasticColor;
   
   CGSize size = self.bounds.size;
@@ -242,12 +242,22 @@
     }
     
     bcolor = plasticColor;
-    controlsAlpha = 1.0;
     _menuView.frame = (CGRect){0,0,_selectButton.frame.size.width+_startButton.frame.size.width+_optionsButton.frame.size.width+buttonSpacing*2,_selectButton.frame.size.height};
     _menuView.frame = (CGRect){(size.width-_menuView.frame.size.width)*0.5,_screenView.frame.origin.y+_screenView.frame.size.height+screenBorderY,_menuView.frame.size};
     _selectButton.frame = (CGRect){0,0,_selectButton.frame.size};
     _startButton.frame = (CGRect){_selectButton.frame.origin.x+_selectButton.frame.size.width+buttonSpacing,_selectButton.frame.origin.y,_startButton.frame.size};
     _optionsButton.frame = (CGRect){_startButton.frame.origin.x+_startButton.frame.size.width+buttonSpacing,_selectButton.frame.origin.y,_optionsButton.frame.size};
+    
+    [_optionsButton portrait];
+    [_startButton portrait];
+    [_selectButton portrait];
+    [_dPadView portrait];
+    [_lButton portrait];
+    [_rButton portrait];
+    [_xButton portrait];
+    [_yButton portrait];
+    [_aButton portrait];
+    [_bButton portrait];
   }
   else
   {
@@ -255,16 +265,29 @@
     CGSize screenViewSize = (CGSize){(int)((size.height*originalWidth)/originalHeight),size.height};
     _screenView.frame = (CGRect){(int)((size.width-screenViewSize.width)*0.5),0,screenViewSize};
     
-    screenBorderX = 30;
+    int boffset = (int)((((size.width-_screenView.frame.size.width)*0.5)-_leftButtonView.frame.size.width)*0.5);
+    int moffset = (int)((((size.width-_screenView.frame.size.width)*0.5)-_menuView.frame.size.width)*0.5);
+    screenBorderX = (boffset>=10) ? boffset : 10;
     screenBorderY = 20;
+    buttonSpacing = 12;
     
     bcolor = blackColor;
-    controlsAlpha = 0.1;
     _menuView.frame = (CGRect){0,0,_selectButton.frame.size.width,_selectButton.frame.size.height+_startButton.frame.size.height+_optionsButton.frame.size.height+20};
-    _menuView.frame = (CGRect){screenBorderX,screenBorderY,_menuView.frame.size};
+    _menuView.frame = (CGRect){(moffset>=screenBorderX)?moffset:screenBorderX,screenBorderY,_menuView.frame.size};
     _selectButton.frame = (CGRect){0,0,_selectButton.frame.size};
     _startButton.frame = (CGRect){0,_selectButton.frame.origin.y+_selectButton.frame.size.height+buttonSpacing,_startButton.frame.size};
     _optionsButton.frame = (CGRect){0,_startButton.frame.origin.y+_startButton.frame.size.height+buttonSpacing,_optionsButton.frame.size};
+    
+    [_optionsButton landscape];
+    [_startButton landscape];
+    [_selectButton landscape];
+    [_dPadView landscape];
+    [_lButton landscape];
+    [_rButton landscape];
+    [_xButton landscape];
+    [_yButton landscape];
+    [_aButton landscape];
+    [_bButton landscape];
   }
   
   if(fullScreen == YES)
@@ -288,7 +311,7 @@
   
   if(_viewMode == LMEmulatorControllerViewModeScreenOnly)
   {
-    _menuView.alpha = 0.1;
+    _menuView.alpha = 0;
     _pixelView.alpha = 1.0;
     controlsAlpha = 0;
     bcolor = blackColor;

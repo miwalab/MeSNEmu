@@ -11,10 +11,14 @@
 @interface LMButtonView : UIButton
 {
   uint32_t _button;
+  UIImage* _portraitImage;
+  UIImage* _landscapeImage;
 }
 
 @property uint32_t button;
 
 - (id)init:(int)buttonMap;
+- (void)portrait;
+- (void)landscape;
 
 @end

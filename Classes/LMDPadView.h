@@ -9,5 +9,12 @@
 #import <UIKit/UIKit.h>
 
 @interface LMDPadView : UIButton
+{
+  UIImage* _portraitImage;
+  UIImage* _landscapeImage;
+}
+
+- (void)portrait;
+- (void)landscape;
 
 @end

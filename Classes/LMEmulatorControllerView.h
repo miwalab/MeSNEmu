@@ -51,7 +51,7 @@ typedef enum _LMEmulatorControllerViewMode
   // external controller
   LMBTControllerView* _iCadeControlView;
   
-  UIButton* _optionsButton;
+  LMButtonView* _optionsButton;
   
   UIView* _menuView;
   UIView* _leftButtonView;
