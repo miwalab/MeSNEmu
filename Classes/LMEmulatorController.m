@@ -120,7 +120,6 @@ typedef enum _LMEmulatorAlert
                                             otherButtonTitles:
                           NSLocalizedString(@"RESET", nil),
 #ifdef SI_ENABLE_SAVES
-                          NSLocalizedString(@"LOAD_CHEAT", nil),
                           NSLocalizedString(@"SAVE_STATE", nil),
 #endif
                           NSLocalizedString(@"SETTINGS", nil),
@@ -131,6 +130,22 @@ typedef enum _LMEmulatorAlert
   _actionSheet = sheet;
   [sheet showInView:self.view];
   [sheet autorelease];
+}
+
+- (void)LM_cheat:(UIButton*)sender
+{
+  if (_customView.cheatButton.enabled) {
+    _customView.cheatButton.enabled = NO;
+    if (_customView.cheatButton.selected) {
+      SIDeleteCheats();
+      _customView.cheatButton.selected = NO;
+    }
+    else {
+      SILoadCheatFile();
+      _customView.cheatButton.selected = YES;
+    }
+    _customView.cheatButton.enabled = YES;
+  }
 }
 
 #pragma mark SIScreenDelegate
@@ -182,12 +197,10 @@ typedef enum _LMEmulatorAlert
   NSLog(@"UIActionSheet button index: %i", buttonIndex);
   int resetIndex = 1;
 #ifdef SI_ENABLE_SAVES
-  int loadIndex = 2;
-  int saveIndex = 3;
-  int settingsIndex = 4;
-  int snsIndex = 5;
+  int saveIndex = 2;
+  int settingsIndex = 3;
+  int snsIndex = 4;
 #else
-  int loadIndex = -1
   int saveIndex = -1;
   int settingsIndex = 2;
   int snsIndex = 3;
@@ -209,14 +222,6 @@ typedef enum _LMEmulatorAlert
     alert.tag = LMEmulatorAlertReset;
     [alert show];
     [alert release];
-  }
-  else if(buttonIndex == loadIndex)
-  {
-    SISetEmulationPaused(1);
-    SIWaitForPause();
-    SILoadCheatFile();
-    _customView.iCadeControlView.active = YES;
-    SISetEmulationPaused(0);
   }
   else if(buttonIndex == saveIndex)
   {
@@ -543,6 +548,7 @@ typedef enum _LMEmulatorAlert
   _customView = [[LMEmulatorControllerView alloc] initWithFrame:CGRectZero];
   _customView.iCadeControlView.delegate = self;
   [_customView.optionsButton addTarget:self action:@selector(LM_options:) forControlEvents:UIControlEventTouchUpInside];
+  [_customView.cheatButton addTarget:self action:@selector(LM_cheat:) forControlEvents:UIControlEventTouchUpInside];
   self.view = _customView;
 }
 

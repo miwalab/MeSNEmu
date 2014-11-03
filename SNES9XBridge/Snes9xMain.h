@@ -81,6 +81,7 @@ void SISaveSRAM();
 // ===============
   
 void SILoadCheatFile();
+void SIDeleteCheats();
 
 // Notifications to the emulator
 // =============================

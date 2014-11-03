@@ -56,17 +56,28 @@
         red2 = 220/255.0;
         green2 = 220/255.0;
         blue2 = 220/255.0;
-        self.frame = (CGRect){0,0,70,18};
+        self.frame = (CGRect){0,0,60,18};
         self.titleLabel.font = [UIFont boldSystemFontOfSize:10];
         [self setTitle:NSLocalizedString(@"MENU", nil) forState:UIControlStateNormal];
         break;
+      case -1:
+        red = 90/255.0;
+        green = 90/255.0;
+        blue = 90/255.0;
+        red2 = 220/255.0;
+        green2 = 220/255.0;
+        blue2 = 220/255.0;
+        self.frame = (CGRect){0,0,60,18};
+        self.titleLabel.font = [UIFont boldSystemFontOfSize:10];
+        [self setTitle:NSLocalizedString(@"CHEAT", nil) forState:UIControlStateNormal];
+        break;
       case SI_BUTTON_START:
-        self.frame = (CGRect){0,0,70,18};
+        self.frame = (CGRect){0,0,60,18};
         self.titleLabel.font = [UIFont boldSystemFontOfSize:10];
         [self setTitle:NSLocalizedString(@"START", nil) forState:UIControlStateNormal];
         break;
       case SI_BUTTON_SELECT:
-        self.frame = (CGRect){0,0,70,18};
+        self.frame = (CGRect){0,0,60,18};
         self.titleLabel.font = [UIFont boldSystemFontOfSize:10];
         [self setTitle:NSLocalizedString(@"SELECT", nil) forState:UIControlStateNormal];
         break;
@@ -190,12 +201,24 @@
 - (void)portrait
 {
   [self setTitleColor:[UIColor colorWithRed:150/255.0 green:150/255.0 blue:150/255.0 alpha:1.0] forState:UIControlStateNormal];
+  [self setTitleColor:[UIColor colorWithRed:180/255.0 green:180/255.0 blue:180/255.0 alpha:1.0] forState:UIControlStateSelected];
   [self setBackgroundImage:_portraitImage forState:UIControlStateNormal];
+  UIGraphicsBeginImageContextWithOptions(CGSizeMake(self.frame.size.width, self.frame.size.height), NO, self.currentImage.scale);
+  [_portraitImage drawInRect:CGRectMake(0, 0, self.frame.size.width, self.frame.size.height)];
+  [_portraitImage drawInRect:CGRectMake(0, 0, self.frame.size.width, self.frame.size.height) blendMode:kCGBlendModeDifference alpha:0.4f];
+  [self setBackgroundImage:UIGraphicsGetImageFromCurrentImageContext() forState:UIControlStateSelected];
+  UIGraphicsEndImageContext();
 }
 - (void)landscape
 {
   [self setTitleColor:[UIColor colorWithRed:120/255.0 green:120/255.0 blue:120/255.0 alpha:1.0] forState:UIControlStateNormal];
+  [self setTitleColor:[UIColor colorWithRed:150/255.0 green:150/255.0 blue:150/255.0 alpha:1.0] forState:UIControlStateSelected];
   [self setBackgroundImage:_landscapeImage forState:UIControlStateNormal];
+  UIGraphicsBeginImageContextWithOptions(CGSizeMake(self.frame.size.width, self.frame.size.height), NO, self.currentImage.scale);
+  [_landscapeImage drawInRect:CGRectMake(0, 0, self.frame.size.width, self.frame.size.height)];
+  [_landscapeImage drawInRect:CGRectMake(0, 0, self.frame.size.width, self.frame.size.height) blendMode:kCGBlendModeDifference alpha:0.4f];
+  [self setBackgroundImage:UIGraphicsGetImageFromCurrentImageContext() forState:UIControlStateSelected];
+  UIGraphicsEndImageContext();
 }
 
 @end

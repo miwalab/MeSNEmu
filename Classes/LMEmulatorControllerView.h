@@ -52,6 +52,7 @@ typedef enum _LMEmulatorControllerViewMode
   LMBTControllerView* _iCadeControlView;
   
   LMButtonView* _optionsButton;
+  LMButtonView* _cheatButton;
   
   UIView* _menuView;
   UIView* _leftButtonView;
@@ -63,6 +64,7 @@ typedef enum _LMEmulatorControllerViewMode
 }
 
 @property (readonly) UIButton* optionsButton;
+@property (readonly) UIButton* cheatButton;
 @property (readonly) LMBTControllerView* iCadeControlView;
 @property (nonatomic) LMEmulatorControllerViewMode viewMode;
 @property (readonly) LMPixelView* pixelView;

@@ -22,6 +22,7 @@
 @implementation LMEmulatorControllerView
 
 @synthesize optionsButton = _optionsButton;
+@synthesize cheatButton = _cheatButton;
 @synthesize iCadeControlView = _iCadeControlView;
 @synthesize viewMode = _viewMode;
 - (void)setViewMode:(LMEmulatorControllerViewMode)viewMode
@@ -123,6 +124,10 @@
     // menu button
     _optionsButton = [[LMButtonView alloc] init:0];
     [_menuView addSubview:_optionsButton];
+    
+    // cheat button
+    _cheatButton = [[LMButtonView alloc] init:-1];
+    [_menuView addSubview:_cheatButton];
     
     _leftButtonView = [[UIView alloc] initWithFrame:(CGRect){0,0,110,145}];
     [self addSubview:_leftButtonView];
@@ -234,21 +239,23 @@
     CGSize screenViewSize = (CGSize){size.width,(int)((size.width*originalHeight)/originalWidth)};
     _screenView.frame = (CGRect){0,0,screenViewSize};
     
-    if (size.height-_screenView.frame.size.height-_menuView.frame.size.height-_leftButtonView.frame.size.height>120) {
+    if (size.height-_screenView.frame.size.height-_menuView.frame.size.height-_leftButtonView.frame.size.height>=140) {
       screenBorderY = 60;
     }
-    if (size.width-_leftButtonView.frame.size.width-_rightButtonView.frame.size.width>120) {
+    if (size.width-_leftButtonView.frame.size.width-_rightButtonView.frame.size.width>=120) {
       screenBorderX = 50;
     }
     
     bcolor = plasticColor;
-    _menuView.frame = (CGRect){0,0,_optionsButton.frame.size.width+_startButton.frame.size.width+_selectButton.frame.size.width+buttonSpacing*2,_optionsButton.frame.size.height};
+    _menuView.frame = (CGRect){0,0,_optionsButton.frame.size.width+_cheatButton.frame.size.width+_startButton.frame.size.width+_selectButton.frame.size.width+buttonSpacing*3,_optionsButton.frame.size.height};
     _menuView.frame = (CGRect){(size.width-_menuView.frame.size.width)*0.5,_screenView.frame.origin.y+_screenView.frame.size.height+screenBorderY,_menuView.frame.size};
     _optionsButton.frame = (CGRect){0,0,_optionsButton.frame.size};
-    _startButton.frame = (CGRect){_optionsButton.frame.origin.x+_optionsButton.frame.size.width+buttonSpacing,_optionsButton.frame.origin.y,_startButton.frame.size};
+    _cheatButton.frame = (CGRect){_optionsButton.frame.origin.x+_optionsButton.frame.size.width+buttonSpacing,_optionsButton.frame.origin.y,_cheatButton.frame.size};
+    _startButton.frame = (CGRect){_cheatButton.frame.origin.x+_cheatButton.frame.size.width+buttonSpacing,_optionsButton.frame.origin.y,_startButton.frame.size};
     _selectButton.frame = (CGRect){_startButton.frame.origin.x+_startButton.frame.size.width+buttonSpacing,_optionsButton.frame.origin.y,_selectButton.frame.size};
     
     [_optionsButton portrait];
+    [_cheatButton portrait];
     [_startButton portrait];
     [_selectButton portrait];
     [_dPadView portrait];
@@ -267,18 +274,21 @@
     
     int boffset = (int)((((size.width-_screenView.frame.size.width)*0.5)-_leftButtonView.frame.size.width)*0.5);
     screenBorderX = (boffset>=10) ? boffset : 10;
-    screenBorderY = 20;
-    buttonSpacing = 12;
+    if (size.height-_menuView.frame.size.height-_leftButtonView.frame.size.height>=100) {
+      screenBorderY = 40;
+    }
     
     bcolor = blackColor;
-    _menuView.frame = (CGRect){0,0,_optionsButton.frame.size.width,_optionsButton.frame.size.height+_startButton.frame.size.height+_selectButton.frame.size.height+buttonSpacing*2};
+    _menuView.frame = (CGRect){0,0,_optionsButton.frame.size.width,_optionsButton.frame.size.height+_cheatButton.frame.size.height+_startButton.frame.size.height+_selectButton.frame.size.height+buttonSpacing*3};
     int moffset = (int)((((size.width-_screenView.frame.size.width)*0.5)-_menuView.frame.size.width)*0.5);
     _menuView.frame = (CGRect){(moffset>=screenBorderX)?moffset:screenBorderX,screenBorderY,_menuView.frame.size};
     _optionsButton.frame = (CGRect){0,0,_optionsButton.frame.size};
-    _startButton.frame = (CGRect){0,_optionsButton.frame.origin.y+_optionsButton.frame.size.height+buttonSpacing,_startButton.frame.size};
+    _cheatButton.frame = (CGRect){0,_optionsButton.frame.origin.y+_optionsButton.frame.size.height+buttonSpacing,_cheatButton.frame.size};
+    _startButton.frame = (CGRect){0,_cheatButton.frame.origin.y+_cheatButton.frame.size.height+buttonSpacing,_startButton.frame.size};
     _selectButton.frame = (CGRect){0,_startButton.frame.origin.y+_startButton.frame.size.height+buttonSpacing,_selectButton.frame.size};
     
     [_optionsButton landscape];
+    [_cheatButton landscape];
     [_startButton landscape];
     [_selectButton landscape];
     [_dPadView landscape];
@@ -385,6 +395,8 @@
   
   [_optionsButton release];
   _optionsButton = nil;
+  [_cheatButton release];
+  _cheatButton = nil;
   
   [super dealloc];
 }
