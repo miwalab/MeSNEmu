@@ -82,12 +82,12 @@
         [self setTitle:NSLocalizedString(@"SELECT", nil) forState:UIControlStateNormal];
         break;
       case SI_BUTTON_A:
-        red = 66/255.0;
-        green = 49/255.0;
-        blue = 139/255.0;
-        red2 = 236/255.0;
-        green2 = 27/255.0;
-        blue2 = 111/255.0;
+        red = 63/255.0;
+        green = 57/255.0;
+        blue = 126/255.0;
+        red2 = 196/255.0;
+        green2 = 74/255.0;
+        blue2 = 78/255.0;
         self.frame = (CGRect){0,0,38.0,38.0};
         radius = (38.0*0.5)-(border*0.5);
         radius2 = (38.0*0.5)-(border2*0.5);
@@ -95,12 +95,12 @@
         //[self setTitle:NSLocalizedString(@"A", nil) forState:UIControlStateNormal];
         break;
       case SI_BUTTON_B:
-        red = 66/255.0;
-        green = 49/255.0;
-        blue = 139/255.0;
-        red2 = 237/255.0;
-        green2 = 189/255.0;
-        blue2 = 19/255.0;
+        red = 63/255.0;
+        green = 57/255.0;
+        blue = 126/255.0;
+        red2 = 246/255.0;
+        green2 = 183/255.0;
+        blue2 = 64/255.0;
         self.frame = (CGRect){0,0,38.0,38.0};
         radius = (38.0*0.5)-(border*0.5);
         radius2 = (38.0*0.5)-(border2*0.5);
@@ -108,12 +108,12 @@
         //[self setTitle:NSLocalizedString(@"B", nil) forState:UIControlStateNormal];
         break;
       case SI_BUTTON_X:
-        red = 131/255.0;
-        green = 126/255.0;
-        blue = 148/255.0;
-        red2 = 15/255.0;
-        green2 = 121/255.0;
-        blue2 = 145/255.0;
+        red = 114/255.0;
+        green = 124/255.0;
+        blue = 176/255.0;
+        red2 = 0/255.0;
+        green2 = 118/255.0;
+        blue2 = 164/255.0;
         self.frame = (CGRect){0,0,38.0,38.0};
         radius = (38.0*0.5)-(border*0.5);
         radius2 = (38.0*0.5)-(border2*0.5);
@@ -121,12 +121,12 @@
         //[self setTitle:NSLocalizedString(@"X", nil) forState:UIControlStateNormal];
         break;
       case SI_BUTTON_Y:
-        red = 131/255.0;
-        green = 126/255.0;
-        blue = 148/255.0;
-        red2 = 0/255.0;
-        green2 = 170/255.0;
-        blue2 = 110/255.0;
+        red = 114/255.0;
+        green = 124/255.0;
+        blue = 176/255.0;
+        red2 = 79/255.0;
+        green2 = 146/255.0;
+        blue2 = 88/255.0;
         self.frame = (CGRect){0,0,38.0,38.0};
         radius = (38.0*0.5)-(border*0.5);
         radius2 = (38.0*0.5)-(border2*0.5);
