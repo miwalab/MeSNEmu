@@ -64,6 +64,11 @@ static int const LMFileOrganizationVersionNumber = 1;
   [super dealloc];
 }
 
+- (NSComparisonResult)compareByDisplayName:(LMFileListItem*)fileListItem
+{
+  return [[self.displayName uppercaseString] compare:[fileListItem.displayName uppercaseString]];
+}
+
 @end
 
 #pragma mark -
@@ -221,7 +226,7 @@ static int const LMFileOrganizationVersionNumber = 1;
         [item release];
       }
     }
-    proposedFileList = onlyROMsItemList;
+	proposedFileList = [onlyROMsItemList sortedArrayUsingSelector:@selector(compareByDisplayName:)];
     
     // sort symbols first
     NSMutableArray* symbolsList = [NSMutableArray array];
