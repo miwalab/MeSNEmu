@@ -219,10 +219,6 @@
   CGSize size = self.bounds.size;
   int originalWidth = 256;
   int originalHeight = 224;
-  if (originalWidth*2<=size.width && originalHeight*2<=size.height) {
-    originalWidth = 256*2;
-    originalHeight = 224*2;
-  }
   
   int width = originalWidth;
   int height = originalHeight;
@@ -236,15 +232,17 @@
   if(size.height > size.width)
   {
     // portrait
+    int scale = (int)floor((size.width-40)/originalWidth);
+    width = originalWidth*scale;
+    height = originalHeight*scale;
+    
     CGSize screenViewSize = (CGSize){size.width,(int)((size.width*originalHeight)/originalWidth)};
     _screenView.frame = (CGRect){0,0,screenViewSize};
     
-    if (size.height-_screenView.frame.size.height-_menuView.frame.size.height-_leftButtonView.frame.size.height>=140) {
-      screenBorderY = 60;
-    }
-    if (size.width-_leftButtonView.frame.size.width-_rightButtonView.frame.size.width>=120) {
-      screenBorderX = 50;
-    }
+    int xoffset = (int)((size.width-_leftButtonView.frame.size.width-_rightButtonView.frame.size.width)/4);
+    screenBorderX = (xoffset<50) ? xoffset : 50;
+    int yoffset = (int)((size.height-_screenView.frame.size.height-_menuView.frame.size.height-_leftButtonView.frame.size.height)/3);
+    screenBorderY = (yoffset<60) ? yoffset : 60;
     
     bcolor = plasticColor;
     _menuView.frame = (CGRect){0,0,_optionsButton.frame.size.width+_cheatButton.frame.size.width+_startButton.frame.size.width+_selectButton.frame.size.width+buttonSpacing*3,_optionsButton.frame.size.height};
@@ -269,14 +267,17 @@
   else
   {
     // landscape
+    int scale = (int)floor((size.height-40)/originalHeight);
+    width = originalWidth*scale;
+    height = originalHeight*scale;
+    
     CGSize screenViewSize = (CGSize){(int)((size.height*originalWidth)/originalHeight),size.height};
     _screenView.frame = (CGRect){(int)((size.width-screenViewSize.width)*0.5),0,screenViewSize};
     
     int boffset = (int)((((size.width-_screenView.frame.size.width)*0.5)-_leftButtonView.frame.size.width)*0.5);
     screenBorderX = (boffset>=10) ? boffset : 10;
-    if (size.height-_menuView.frame.size.height-_leftButtonView.frame.size.height>=100) {
-      screenBorderY = 40;
-    }
+    int yoffset = (int)((size.height-_menuView.frame.size.height-_leftButtonView.frame.size.height)/3);
+    screenBorderY = (yoffset<40) ? yoffset : 40;
     
     bcolor = blackColor;
     _menuView.frame = (CGRect){0,0,_optionsButton.frame.size.width,_optionsButton.frame.size.height+_cheatButton.frame.size.height+_startButton.frame.size.height+_selectButton.frame.size.height+buttonSpacing*3};

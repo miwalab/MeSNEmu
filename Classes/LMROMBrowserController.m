@@ -226,7 +226,7 @@ static int const LMFileOrganizationVersionNumber = 1;
         [item release];
       }
     }
-	proposedFileList = [onlyROMsItemList sortedArrayUsingSelector:@selector(compareByDisplayName:)];
+    proposedFileList = [onlyROMsItemList sortedArrayUsingSelector:@selector(compareByDisplayName:)];
     
     // sort symbols first
     NSMutableArray* symbolsList = [NSMutableArray array];
@@ -495,11 +495,8 @@ static int const LMFileOrganizationVersionNumber = 1;
 
 - (UITableViewCell*)tableView:(UITableView*)tableView cellForRowAtIndexPath:(NSIndexPath*)indexPath
 {
-  static NSString* CellIdentifier = @"Cell";
-  
-  UITableViewCell* cell = [tableView dequeueReusableCellWithIdentifier:CellIdentifier];
-  if(cell == nil)
-    cell = [[[UITableViewCell alloc] initWithStyle:UITableViewCellStyleSubtitle reuseIdentifier:CellIdentifier] autorelease];
+  static NSString *CellIdentifier = @"Cell";
+  UITableViewCell *cell = [self.tableView dequeueReusableCellWithIdentifier:CellIdentifier];
   
   LMFileListItem* item = [self LM_romItemForTableView:tableView indexPath:indexPath];
   cell.textLabel.text = item.displayName;
@@ -508,7 +505,7 @@ static int const LMFileOrganizationVersionNumber = 1;
     cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
   else
     cell.accessoryType = UITableViewCellAccessoryNone;
-  
+	
   if(item.imageFilePath) {
     cell.imageView.image = [UIImage imageWithContentsOfFile:item.imageFilePath];
   } else {
@@ -593,8 +590,64 @@ static int const LMFileOrganizationVersionNumber = 1;
   if(!item.hasDetails && item.imageFilePath) {
     return 100.0;
   } else {
-    return 50.0;
+    return 58.0;
   }
+}
+
+- (CGFloat)tableView:(UITableView *)tableView heightForHeaderInSection:(NSInteger)section
+{
+  return 34.0;
+}
+
+- (UIView *)tableView:(UITableView *)tableView viewForHeaderInSection:(NSInteger)section
+{
+  if(_detailsItem == nil) {
+    UIView *view = [[[UIView alloc] init] autorelease];
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, 320, 34.0)];
+    [label setText:[self tableView: tableView titleForHeaderInSection: section]];
+    [label setFont:[UIFont boldSystemFontOfSize:14]];
+    [label setTextColor:[UIColor grayColor]];
+    [view setBackgroundColor:[UIColor whiteColor]];
+    [view addSubview:label];
+    [label release];
+    
+    /*CAGradientLayer *gradient = [CAGradientLayer layer];
+    UIColor *startColor = [UIColor colorWithRed:237/255.0 green:237/255.0 blue:237/255.0 alpha:1];
+    UIColor *endColor = [UIColor colorWithRed:255/255.0 green:255/255.0 blue:255/255.0 alpha:1];
+    gradient.frame = CGRectMake(0, 0, 60, 34.0);
+    gradient.colors = @[(id)startColor.CGColor,(id)endColor.CGColor];
+    gradient.startPoint = CGPointMake(0.0f, 1.0f);
+    gradient.endPoint = CGPointMake(1.0f, 1.0f);
+    [view.layer insertSublayer:gradient atIndex:0];*/
+    return view;
+  }
+  return nil;
+}
+
+@end
+
+#pragma mark -
+
+@interface LMROMBrowserListCell : UITableViewCell
+@end
+
+@implementation LMROMBrowserListCell
+- (void)layoutSubviews {
+  [super layoutSubviews];
+  
+  CGSize size = self.contentView.frame.size;
+  self.imageView.frame = CGRectMake(4, 4, 57, 50);
+  self.imageView.backgroundColor = [UIColor whiteColor];
+  [self.textLabel setFont:[UIFont boldSystemFontOfSize:14]];
+  self.textLabel.frame = CGRectMake(69, 4, size.width-69-4, 50);
+  self.imageView.contentMode = UIViewContentModeScaleAspectFit;
+  self.backgroundColor = [UIColor clearColor];
+  self.separatorInset = UIEdgeInsetsMake(0, 4, 0, 0);
+}
+
+- (UIEdgeInsets)layoutMargins
+{
+  return UIEdgeInsetsMake(0, 0, 0, 0);
 }
 
 @end
@@ -635,15 +688,34 @@ static int const LMFileOrganizationVersionNumber = 1;
     
     UISearchBar* searchbar = [[UISearchBar alloc] init];
     [searchbar sizeToFit];
+    [searchbar setSearchBarStyle:UISearchBarStyleMinimal];
     self.tableView.tableHeaderView = searchbar;
     [searchbar release];
     UISearchDisplayController* searchController = [[UISearchDisplayController alloc] initWithSearchBar:searchbar contentsController:self];
     searchController.delegate = self;
     searchController.searchResultsDataSource = self;
     searchController.searchResultsDelegate = self;
+    [self.tableView registerClass:[LMROMBrowserListCell class] forCellReuseIdentifier:@"Cell"];
+    self.searchDisplayController.searchResultsTableView.separatorInset = UIEdgeInsetsZero;
+    self.tableView.backgroundColor = [UIColor clearColor];
+    self.navigationController.view.backgroundColor = [UIColor whiteColor];
+    //self.searchDisplayController.searchResultsTableView.backgroundColor = [UIColor clearColor];
+    
+    /*CAGradientLayer *gradient = [CAGradientLayer layer];
+    UIColor *startColor = [UIColor colorWithRed:237/255.0 green:237/255.0 blue:237/255.0 alpha:1];
+    UIColor *endColor = [UIColor colorWithRed:255/255.0 green:255/255.0 blue:255/255.0 alpha:1];
+    gradient.frame = CGRectMake(0, 0, 60, self.navigationController.view.frame.size.height);
+    gradient.colors = @[(id)startColor.CGColor,(id)endColor.CGColor];
+    gradient.startPoint = CGPointMake(0.0f, 1.0f);
+    gradient.endPoint = CGPointMake(1.0f, 1.0f);
+    [self.navigationController.view.layer insertSublayer:gradient atIndex:0];*/
+    //[self.searchDisplayController.searchResultsTableView.layer insertSublayer:gradient atIndex:0];
   }
   else
+  {
     self.title = _detailsItem.displayName;
+    [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"Cell"];
+  }
   
   UIBarButtonItem* settingsButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"SETTINGS", nil) style:UIBarButtonItemStyleBordered target:self action:@selector(LM_settingsTapped)];
   self.navigationItem.rightBarButtonItem = settingsButton;
