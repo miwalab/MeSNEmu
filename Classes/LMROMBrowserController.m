@@ -204,6 +204,7 @@ static int const LMFileOrganizationVersionNumber = 1;
         LMFileListItem* item = [[LMFileListItem alloc] init];
         item.displayName = [file stringByDeletingPathExtension];
         item.fileName = file;
+        item.displayDetails = @"-";
         NSString* sramPath = [_sramPath stringByAppendingPathComponent:[[file stringByDeletingPathExtension] stringByAppendingPathExtension:@"srm"]];
         if([fm fileExistsAtPath:sramPath] == YES)
           item.hasDetails = YES;
@@ -213,12 +214,55 @@ static int const LMFileOrganizationVersionNumber = 1;
           if([file2 hasPrefix:[item.displayName stringByAppendingString:@"."]] && [extension2 compare:@"frz"] == NSOrderedSame)
           {
             item.hasDetails = YES;
-            NSString* imagePath = [_romPath stringByAppendingPathComponent:[[file2 stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"]];
-            if([fm fileExistsAtPath:imagePath] == YES)
+            int slot = [[[file2 stringByDeletingPathExtension] pathExtension] integerValue];
+            if (slot == 0)
             {
-              item.imageFilePath = imagePath;
-              int slot = [[[file stringByDeletingPathExtension] pathExtension] integerValue];
-              if(slot == 0) break;
+              NSDictionary *attribute = [fm attributesOfItemAtPath:[_romPath stringByAppendingPathComponent:file2] error:nil];
+              NSDate *mdate = [attribute objectForKey:NSFileModificationDate];
+              NSDateFormatter *dateFormatter = [[NSDateFormatter alloc] init];
+              [dateFormatter setDateStyle:NSDateFormatterShortStyle];
+              [dateFormatter setTimeStyle:NSDateFormatterShortStyle];
+              
+              BOOL(^isSameDay)(NSDate*,NSDate*) = ^BOOL(NSDate*date1,NSDate*date2){
+                NSCalendar* calendar = [NSCalendar currentCalendar];
+                NSDateComponents* c1 = [calendar components:(NSYearCalendarUnit | NSMonthCalendarUnit | NSDayCalendarUnit) fromDate:date1];
+                NSDateComponents* c2 = [calendar components:(NSYearCalendarUnit | NSMonthCalendarUnit | NSDayCalendarUnit) fromDate:date2];
+                return ([c1 year] == [c2 year] && [c1 month] == [c2 month] && [c1 day] == [c2 day]);
+              };
+              if(isSameDay([NSDate date],mdate))
+              {
+                dateFormatter.doesRelativeDateFormatting = YES;
+                item.displayDetails = [dateFormatter stringFromDate:mdate];
+              }
+              else if(isSameDay([NSDate dateWithTimeIntervalSinceNow:-86400],mdate) ||
+                      isSameDay([NSDate dateWithTimeIntervalSinceNow:-86400*2],mdate))
+              {
+                dateFormatter.doesRelativeDateFormatting = YES;
+                [dateFormatter setTimeStyle:NSDateFormatterNoStyle];
+                item.displayDetails = [dateFormatter stringFromDate:mdate];
+              }
+              else if(isSameDay([NSDate dateWithTimeIntervalSinceNow:-86400*3],mdate) ||
+                      isSameDay([NSDate dateWithTimeIntervalSinceNow:-86400*4],mdate) ||
+                      isSameDay([NSDate dateWithTimeIntervalSinceNow:-86400*5],mdate) ||
+                      isSameDay([NSDate dateWithTimeIntervalSinceNow:-86400*6],mdate) ||
+                      isSameDay([NSDate dateWithTimeIntervalSinceNow:-86400*7],mdate))
+              {
+                [dateFormatter setDateFormat:@"EEEE"];
+                item.displayDetails = [dateFormatter stringFromDate:mdate];
+              }
+              else
+              {
+                [dateFormatter setDateStyle:NSDateFormatterMediumStyle];
+                [dateFormatter setTimeStyle:NSDateFormatterNoStyle];
+                item.displayDetails = [dateFormatter stringFromDate:mdate];
+              }
+              
+              NSString* imagePath = [_romPath stringByAppendingPathComponent:[[file2 stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"]];
+              if([fm fileExistsAtPath:imagePath] == YES)
+              {
+                item.imageFilePath = imagePath;
+              }
+              break;
             }
           }
         }
@@ -313,6 +357,8 @@ static int const LMFileOrganizationVersionNumber = 1;
         int slot = [[[file stringByDeletingPathExtension] pathExtension] integerValue];
         if(slot == 0)
           saveItem.displayName = NSLocalizedString(@"LAST_PLAYED_SPOT", nil);
+        else if (slot<=999)
+          saveItem.displayName = [NSString stringWithFormat:NSLocalizedString(@"SAVE_FILE_SLOT_%i", nil), slot];
         else {
           NSDate* date = [[NSDate alloc] initWithTimeIntervalSince1970:slot];
           saveItem.displayName = [NSDateFormatter localizedStringFromDate:date dateStyle:NSDateFormatterMediumStyle timeStyle:NSDateFormatterMediumStyle];
@@ -500,11 +546,8 @@ static int const LMFileOrganizationVersionNumber = 1;
   
   LMFileListItem* item = [self LM_romItemForTableView:tableView indexPath:indexPath];
   cell.textLabel.text = item.displayName;
-  //cell.detailTextLabel.text = item.displayDetails;
-  if(item.hasDetails)
-    cell.accessoryType = UITableViewCellAccessoryDetailDisclosureButton;
-  else
-    cell.accessoryType = UITableViewCellAccessoryNone;
+  cell.detailTextLabel.text = item.displayDetails;
+  cell.accessoryType = UITableViewCellAccessoryNone;
 	
   if(item.imageFilePath) {
     cell.imageView.image = [UIImage imageWithContentsOfFile:item.imageFilePath];
@@ -515,7 +558,7 @@ static int const LMFileOrganizationVersionNumber = 1;
   return cell;
 }
 
-- (void)tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
+- (void)tableView:(UITableView*)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath*)indexPath
 {
   LMEmulatorController* emulator = [[LMEmulatorController alloc] init];
   LMFileListItem* item = [self LM_romItemForTableView:tableView indexPath:indexPath];
@@ -539,18 +582,23 @@ static int const LMFileOrganizationVersionNumber = 1;
       emulator.initialSaveFileName = item.fileName;
     }
   }
-  [self.searchDisplayController setActive:NO];
+  //[self.searchDisplayController setActive:NO];
   [self.navigationController presentViewController:emulator animated:YES completion:nil];
   [emulator release];
 }
 
-- (void)tableView:(UITableView*)tableView accessoryButtonTappedForRowWithIndexPath:(NSIndexPath*)indexPath
+- (void)tableView:(UITableView*)tableView didSelectRowAtIndexPath:(NSIndexPath*)indexPath
 {
-  LMROMBrowserController* detailsBrowser = [[LMROMBrowserController alloc] initWithStyle:UITableViewStyleGrouped];
-  LMFileListItem* item = [self LM_romItemForTableView:tableView indexPath:indexPath];
-  detailsBrowser.detailsItem = item;
-  [self.navigationController pushViewController:detailsBrowser animated:YES];
-  [detailsBrowser release];
+  if(_detailsItem == nil) {
+    LMROMBrowserController* detailsBrowser = [[LMROMBrowserController alloc] initWithStyle:UITableViewStyleGrouped];
+    LMFileListItem* item = [self LM_romItemForTableView:tableView indexPath:indexPath];
+    detailsBrowser.detailsItem = item;
+    [self.navigationController pushViewController:detailsBrowser animated:YES];
+    [detailsBrowser release];
+  }
+  else {
+    [self tableView:tableView accessoryButtonTappedForRowWithIndexPath:indexPath];
+  }
 }
 
 - (void)tableView:(UITableView*)tableView commitEditingStyle:(UITableViewCellEditingStyle)editingStyle forRowAtIndexPath:(NSIndexPath*)indexPath
@@ -587,10 +635,15 @@ static int const LMFileOrganizationVersionNumber = 1;
 -(CGFloat)tableView:(UITableView*)tableView heightForRowAtIndexPath:(NSIndexPath *)indexPath
 {
   LMFileListItem* item = [self LM_romItemForTableView:tableView indexPath:indexPath];
-  if(!item.hasDetails && item.imageFilePath) {
-    return 100.0;
-  } else {
-    return 58.0;
+  if(_detailsItem == nil) {
+    return 70.0;
+  }
+  else {
+    if(item.imageFilePath) {
+      return 100.0;
+    } else {
+      return 44.0;
+    }
   }
 }
 
@@ -603,11 +656,11 @@ static int const LMFileOrganizationVersionNumber = 1;
 {
   if(_detailsItem == nil) {
     UIView *view = [[[UIView alloc] init] autorelease];
-    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(10, 0, 320, 34.0)];
+    UILabel *label = [[UILabel alloc] initWithFrame:CGRectMake(16, 0, 320, 34.0)];
     [label setText:[self tableView: tableView titleForHeaderInSection: section]];
     [label setFont:[UIFont boldSystemFontOfSize:14]];
     [label setTextColor:[UIColor grayColor]];
-    [view setBackgroundColor:[UIColor whiteColor]];
+    [view setBackgroundColor:[UIColor colorWithWhite:250/255.0 alpha:1.0]];
     [view addSubview:label];
     [label release];
     
@@ -632,22 +685,115 @@ static int const LMFileOrganizationVersionNumber = 1;
 @end
 
 @implementation LMROMBrowserListCell
-- (void)layoutSubviews {
+
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+  self = [super initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:reuseIdentifier];
+  if (self) {
+    UIButton* button = [UIButton buttonWithType:UIButtonTypeCustom];
+    
+    CGFloat border = 1.0;
+    CGFloat radius = 4.0;
+    button.frame = CGRectMake(0, 0, 56, 26);
+    button.tag = 100;
+    
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(button.frame.size.width, button.frame.size.height), NO, button.currentImage.scale);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetFillColorWithColor(context, [UIColor colorWithWhite:1.0 alpha:0.0].CGColor);
+    CGContextSetStrokeColorWithColor(context, self.tintColor.CGColor);
+    CGContextSetLineWidth(context, border);
+    
+    CGRect rrect = CGRectMake(0, 0, button.frame.size.width, button.frame.size.height);
+    CGFloat minx = CGRectGetMinX(rrect)+(border/2), midx = CGRectGetMidX(rrect), maxx = CGRectGetMaxX(rrect)-(border/2);
+    CGFloat miny = CGRectGetMinY(rrect)+(border/2), midy = CGRectGetMidY(rrect), maxy = CGRectGetMaxY(rrect)-(border/2);
+    
+    CGContextMoveToPoint(context, minx, midy);
+    CGContextAddArcToPoint(context, minx, miny, midx, miny, radius);
+    CGContextAddArcToPoint(context, maxx, miny, maxx, midy, radius);
+    CGContextAddArcToPoint(context, maxx, maxy, midx, maxy, radius);
+    CGContextAddArcToPoint(context, minx, maxy, minx, midy, radius);
+    CGContextClosePath(context);
+    CGContextDrawPath(context, kCGPathFillStroke);
+    CGContextFillPath(context);
+    [button setBackgroundImage:UIGraphicsGetImageFromCurrentImageContext() forState:UIControlStateNormal];
+    UIGraphicsEndImageContext();
+    
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(button.frame.size.width, button.frame.size.height), NO, button.currentImage.scale);
+    CGContextRef context2 = UIGraphicsGetCurrentContext();
+    CGContextSetFillColorWithColor(context2, self.tintColor.CGColor);
+    CGContextSetStrokeColorWithColor(context2, self.tintColor.CGColor);
+    CGContextSetLineWidth(context2, border);
+    
+    CGContextMoveToPoint(context2, minx, midy);
+    CGContextAddArcToPoint(context2, minx, miny, midx, miny, radius);
+    CGContextAddArcToPoint(context2, maxx, miny, maxx, midy, radius);
+    CGContextAddArcToPoint(context2, maxx, maxy, midx, maxy, radius);
+    CGContextAddArcToPoint(context2, minx, maxy, minx, midy, radius);
+    CGContextClosePath(context2);
+    CGContextDrawPath(context2, kCGPathFillStroke);
+    CGContextFillPath(context2);
+    [button setBackgroundImage:UIGraphicsGetImageFromCurrentImageContext() forState:UIControlStateHighlighted];
+    UIGraphicsEndImageContext();
+    
+    button.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+    [button setTitleColor:self.tintColor forState:UIControlStateNormal];
+    [button setTitleColor:[UIColor whiteColor] forState:UIControlStateHighlighted];
+    [button setTitle:NSLocalizedString(@"PLAY", nil) forState:UIControlStateNormal];
+    [button setTitle:NSLocalizedString(@"PLAY", nil) forState:UIControlStateHighlighted];
+    [button setTitleEdgeInsets:UIEdgeInsetsMake(2, 0, 0, 0)];
+    
+    [button addTarget:self action:@selector(onTapPlayButton:) forControlEvents:UIControlEventTouchUpInside];
+    
+    [self addSubview:button];
+    
+    UILabel* label = [[[UILabel alloc] init] autorelease];
+    label.tag = 101;
+    label.text = NSLocalizedString(@"LAST_PLAYED_SPOT", nil);
+    label.frame = CGRectMake(0, 0, 60, 16);
+    label.font = [UIFont systemFontOfSize:10];
+    label.textColor = [UIColor grayColor];
+    [self addSubview:label];
+  }
+  return self;
+}
+
+- (void)layoutSubviews
+{
   [super layoutSubviews];
   
   CGSize size = self.contentView.frame.size;
-  self.imageView.frame = CGRectMake(4, 4, 57, 50);
+  UIButton* button = (UIButton*)[self viewWithTag:100];
+  UILabel* label = (UILabel*)[self viewWithTag:101];
+  
+  button.frame = (CGRect){size.width-button.frame.size.width-10, 22, button.frame.size};
+  self.imageView.frame = CGRectMake(16, 10, 57, 50);
   self.imageView.backgroundColor = [UIColor whiteColor];
-  [self.textLabel setFont:[UIFont boldSystemFontOfSize:14]];
-  self.textLabel.frame = CGRectMake(69, 4, size.width-69-4, 50);
+  [self.textLabel setFont:[UIFont systemFontOfSize:14]];
+  [self.textLabel setTextColor:[UIColor blackColor]];
+  
+  [self.detailTextLabel setFont:[UIFont systemFontOfSize:12]];
+  [self.detailTextLabel setTextColor:self.tintColor];
+  [self.detailTextLabel setTextAlignment:NSTextAlignmentLeft];
+  self.textLabel.frame = CGRectMake(84, 10, size.width-80-10-(size.width-button.frame.origin.x), 30);
+  [label sizeToFit];
+  label.frame = CGRectMake(84, 40, label.frame.size.width, 16);
+  self.detailTextLabel.frame = CGRectMake(84+label.frame.size.width+5, 40, self.textLabel.frame.size.width-(label.frame.size.width+5), 16);
   self.imageView.contentMode = UIViewContentModeScaleAspectFit;
   self.backgroundColor = [UIColor clearColor];
-  self.separatorInset = UIEdgeInsetsMake(0, 4, 0, 0);
+  self.separatorInset = UIEdgeInsetsMake(0, 16, 0, 0);
 }
 
 - (UIEdgeInsets)layoutMargins
 {
   return UIEdgeInsetsMake(0, 0, 0, 0);
+}
+
+- (void)onTapPlayButton:(id)sender
+{
+  if ([(id <UITableViewDelegate>)[(UITableView *)self.superview.superview delegate] respondsToSelector:@selector(tableView:accessoryButtonTappedForRowWithIndexPath:)]) {
+    [(id <UITableViewDelegate>)[(UITableView *)self.superview.superview delegate] tableView:(UITableView *)self.superview.superview
+                                         accessoryButtonTappedForRowWithIndexPath:[(UITableView *)self.superview.superview indexPathForCell:self]];
+  }
 }
 
 @end
@@ -696,8 +842,8 @@ static int const LMFileOrganizationVersionNumber = 1;
     searchController.searchResultsDataSource = self;
     searchController.searchResultsDelegate = self;
     [self.tableView registerClass:[LMROMBrowserListCell class] forCellReuseIdentifier:@"Cell"];
-    self.searchDisplayController.searchResultsTableView.separatorInset = UIEdgeInsetsZero;
     self.tableView.backgroundColor = [UIColor clearColor];
+    self.searchDisplayController.searchResultsTableView.separatorInset = UIEdgeInsetsZero;
     self.navigationController.view.backgroundColor = [UIColor whiteColor];
     //self.searchDisplayController.searchResultsTableView.backgroundColor = [UIColor clearColor];
     
