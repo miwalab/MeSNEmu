@@ -453,14 +453,26 @@ static int const LMFileOrganizationVersionNumber = 1;
 {
   if(_detailsItem != nil)
     return nil;
+  
+  NSMutableArray *ary = [NSMutableArray array];
+  [ary addObject:UITableViewIndexSearch];
+  
   if(tableView == self.searchDisplayController.searchResultsTableView)
-    return _filteredSectionTitles;
+    [ary addObjectsFromArray:_filteredSectionTitles];
   else
-    return _sectionTitles;
+    [ary addObjectsFromArray:_sectionTitles];
+  
+  return ary;
 }
 
 - (NSInteger)tableView:(UITableView*)tableView sectionForSectionIndexTitle:(NSString*)title atIndex:(NSInteger)index
 {
+  if (index == 0) {
+    CGRect searchBarFrame = self.searchDisplayController.searchBar.frame;
+    [tableView scrollRectToVisible:searchBarFrame animated:NO];
+    return -1;
+  }
+  
   return index;
 }
 
@@ -639,6 +651,16 @@ static int const LMFileOrganizationVersionNumber = 1;
     return view;
   }
   return nil;
+}
+
+- (UITableViewCellEditingStyle)tableView:(UITableView *)aTableView editingStyleForRowAtIndexPath:(NSIndexPath *)indexPath
+{
+  if(_detailsItem != nil) {
+    if (!(indexPath.row==0 && indexPath.section==0)) {
+      return UITableViewCellEditingStyleDelete;
+    }
+  }
+  return UITableViewCellEditingStyleNone;
 }
 
 @end
