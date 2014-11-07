@@ -229,13 +229,13 @@ static int const LMFileOrganizationVersionNumber = 1;
                 NSDateComponents* c2 = [calendar components:(NSYearCalendarUnit | NSMonthCalendarUnit | NSDayCalendarUnit) fromDate:date2];
                 return ([c1 year] == [c2 year] && [c1 month] == [c2 month] && [c1 day] == [c2 day]);
               };
-              if(isSameDay([NSDate date],mdate))
+              if(isSameDay([NSDate date],mdate) ||
+                 isSameDay([NSDate dateWithTimeIntervalSinceNow:-86400],mdate))
               {
                 dateFormatter.doesRelativeDateFormatting = YES;
                 item.displayDetails = [dateFormatter stringFromDate:mdate];
               }
-              else if(isSameDay([NSDate dateWithTimeIntervalSinceNow:-86400],mdate) ||
-                      isSameDay([NSDate dateWithTimeIntervalSinceNow:-86400*2],mdate))
+              else if(isSameDay([NSDate dateWithTimeIntervalSinceNow:-86400*2],mdate))
               {
                 dateFormatter.doesRelativeDateFormatting = YES;
                 [dateFormatter setTimeStyle:NSDateFormatterNoStyle];
@@ -380,62 +380,26 @@ static int const LMFileOrganizationVersionNumber = 1;
     tempItemList = itemsList;
   }
   
-  BOOL different = NO;
   if(searching == YES)
-    different = ([_filteredRomList count] != [tempItemList count]);
+  {
+    [_filteredRomList release];
+    _filteredRomList = [tempItemList copy];
+    [_filteredSectionTitles release];
+    _filteredSectionTitles = [tempSectionTitles copy];
+    [_filteredSectionMarkers release];
+    _filteredSectionMarkers = [tempSectionMarkers copy];
+  }
   else
-    different = ([_romList count] != [tempItemList count]);
-  
-  if(different == NO)
   {
-    for(int i=0; i<[tempItemList count]; i++)
-    {
-      LMFileListItem* romA = nil;
-      if(searching == YES)
-        romA = [_filteredRomList objectAtIndex:i];
-      else
-        romA = [_romList objectAtIndex:i];
-      LMFileListItem* romB = [tempItemList objectAtIndex:i];
-      if([romA.fileName isEqualToString:romB.fileName] == NO)
-      {
-        different = YES;
-        break;
-      }
-      if(romA.hasDetails != romB.hasDetails)
-      {
-        different = YES;
-        break;
-      }
-    }
+    [_romList release];
+    _romList = [tempItemList copy];
+    [_sectionTitles release];
+    _sectionTitles = [tempSectionTitles copy];
+    [_sectionMarkers release];
+    _sectionMarkers = [tempSectionMarkers copy];
+    if(updateTable == YES)
+      [self.tableView reloadData];
   }
-  if(different)
-  {
-    if(searching == YES)
-    {
-      [_filteredRomList release];
-      _filteredRomList = [tempItemList copy];
-      [_filteredSectionTitles release];
-      _filteredSectionTitles = [tempSectionTitles copy];
-      [_filteredSectionMarkers release];
-      _filteredSectionMarkers = [tempSectionMarkers copy];
-    }
-    else
-    {
-      [_romList release];
-      _romList = [tempItemList copy];
-      [_sectionTitles release];
-      _sectionTitles = [tempSectionTitles copy];
-      [_sectionMarkers release];
-      _sectionMarkers = [tempSectionMarkers copy];
-      if(updateTable == YES)
-        [self.tableView reloadData];
-    }
-  }
-}
-- (void)LM_reloadROMList
-{
-  if(self.searchDisplayController.isActive == NO)
-    [self LM_reloadROMList:YES];
 }
 
 - (void)LM_settingsTapped
@@ -842,11 +806,14 @@ static int const LMFileOrganizationVersionNumber = 1;
     searchController.searchResultsDataSource = self;
     searchController.searchResultsDelegate = self;
     [self.tableView registerClass:[LMROMBrowserListCell class] forCellReuseIdentifier:@"Cell"];
+    [self.tableView setBackgroundView:[UIView new]];
     self.tableView.backgroundColor = [UIColor clearColor];
+    self.tableView.sectionIndexBackgroundColor = [UIColor colorWithWhite:255/255.0 alpha:0.5];
+    self.tableView.sectionIndexTrackingBackgroundColor = [UIColor colorWithWhite:245/255.0 alpha:1.0];
     self.searchDisplayController.searchResultsTableView.separatorInset = UIEdgeInsetsZero;
     self.navigationController.view.backgroundColor = [UIColor whiteColor];
-    //self.searchDisplayController.searchResultsTableView.backgroundColor = [UIColor clearColor];
     
+    //self.searchDisplayController.searchResultsTableView.backgroundColor = [UIColor clearColor];
     /*CAGradientLayer *gradient = [CAGradientLayer layer];
     UIColor *startColor = [UIColor colorWithRed:237/255.0 green:237/255.0 blue:237/255.0 alpha:1];
     UIColor *endColor = [UIColor colorWithRed:255/255.0 green:255/255.0 blue:255/255.0 alpha:1];
@@ -862,6 +829,8 @@ static int const LMFileOrganizationVersionNumber = 1;
     self.title = _detailsItem.displayName;
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"Cell"];
   }
+  
+  self.clearsSelectionOnViewWillAppear = NO;
   
   UIBarButtonItem* settingsButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"SETTINGS", nil) style:UIBarButtonItemStyleBordered target:self action:@selector(LM_settingsTapped)];
   self.navigationItem.rightBarButtonItem = settingsButton;
@@ -883,8 +852,6 @@ static int const LMFileOrganizationVersionNumber = 1;
   // and set it for SRAM
   _sramPath = [_romPath copy];
   SISetSRAMPath([_sramPath UTF8String]);
-  
-  [self LM_reloadROMList];
 }
 
 - (void)viewDidUnload
@@ -896,12 +863,17 @@ static int const LMFileOrganizationVersionNumber = 1;
 {
   [super viewWillAppear:animated];
   
-  [self LM_reloadROMList];
+  NSIndexPath *indexPath = [self.tableView indexPathForSelectedRow];
+  [self LM_reloadROMList:YES];
+  if(indexPath) {
+    [self.tableView selectRowAtIndexPath:indexPath animated:NO scrollPosition:UITableViewScrollPositionNone];
+    dispatch_after(0, dispatch_get_main_queue(), ^{
+      [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
+    });
+  }
   
   //_fsTimer = [[NSTimer timerWithTimeInterval:5 target:self selector:@selector(LM_reloadROMList) userInfo:nil repeats:YES] retain];
   //[[NSRunLoop mainRunLoop] addTimer:_fsTimer forMode:NSDefaultRunLoopMode];
-  
-  [[NSNotificationCenter defaultCenter] addObserver:self selector:@selector(LM_reloadROMList) name:UIApplicationDidBecomeActiveNotification object:nil];
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -915,8 +887,6 @@ static int const LMFileOrganizationVersionNumber = 1;
   
   [_fsTimer invalidate];
   _fsTimer = nil;
-  
-  [[NSNotificationCenter defaultCenter] removeObserver:self name:UIApplicationDidBecomeActiveNotification object:nil];
 }
 
 - (BOOL)prefersStatusBarHidden

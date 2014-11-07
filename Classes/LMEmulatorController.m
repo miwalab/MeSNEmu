@@ -106,6 +106,7 @@ typedef enum _LMEmulatorAlert
 - (void)LM_options:(UIButton*)sender
 {
   SISetEmulationPaused(1);
+  SIWaitForPause();
   
   _customView.iCadeControlView.active = NO;
   if([LMGameControllerManager gameControllersMightBeAvailable] == YES)
@@ -225,8 +226,6 @@ typedef enum _LMEmulatorAlert
   }
   else if(buttonIndex == saveIndex)
   {
-    SISetEmulationPaused(1);
-    SIWaitForPause();
     [LMSaveManager saveStateForROMNamed:_romFileName slot:[[NSString stringWithFormat:@"%ld", (long)[[NSDate date] timeIntervalSince1970]] intValue] screenshot:[self getScreen]];
     _customView.iCadeControlView.active = YES;
     SISetEmulationPaused(0);
