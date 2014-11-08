@@ -36,6 +36,56 @@
   
   LMROMBrowserController* romBrowser = [[LMROMBrowserController alloc] init];
   UINavigationController* nav = [[UINavigationController alloc] initWithRootViewController:romBrowser];
+  
+  UINavigationBar* navigationbar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, -100, nav.navigationBar.frame.size.width, 100)];
+  navigationbar.tag = 1000;
+  navigationbar.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleWidth;
+  navigationbar.backgroundColor = [UIColor clearColor];
+  
+  UIImageView* imageview = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, nav.navigationBar.frame.size.width, 100)];
+  imageview.tag = 1001;
+  imageview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+  imageview.contentMode = UIViewContentModeScaleAspectFill;
+  imageview.clipsToBounds = YES;
+  imageview.layer.magnificationFilter = kCAFilterNearest;
+  imageview.alpha = 0.9;
+  [navigationbar addSubview:imageview];
+  [imageview release];
+  
+  UIImageView* gradientimageview = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, nav.navigationBar.frame.size.width, 100)];
+  gradientimageview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+  gradientimageview.contentMode = UIViewContentModeScaleAspectFill;
+  gradientimageview.clipsToBounds = YES;
+  UIGraphicsBeginImageContextWithOptions(CGSizeMake(gradientimageview.frame.size.width, gradientimageview.frame.size.height), NO, gradientimageview.image.scale);
+  CAGradientLayer *gradient = [CAGradientLayer layer];
+  UIColor *startColor = [UIColor colorWithWhite:0 alpha:0];
+  UIColor *endColor = [UIColor colorWithWhite:0 alpha:0.6];
+  gradient.frame = CGRectMake(0, 0, gradientimageview.frame.size.width, gradientimageview.frame.size.height);
+  gradient.colors = @[(id)startColor.CGColor,(id)endColor.CGColor];
+  gradient.startPoint = CGPointMake(0.0f, 1.0f);
+  gradient.endPoint = CGPointMake(1.0f, 1.0f);
+  [gradientimageview.layer insertSublayer:gradient atIndex:0];
+  [gradientimageview.layer renderInContext:UIGraphicsGetCurrentContext()];
+  gradientimageview.image = UIGraphicsGetImageFromCurrentImageContext();
+  UIGraphicsEndImageContext();
+  [gradient removeFromSuperlayer];
+  [navigationbar addSubview:gradientimageview];
+  [gradientimageview release];
+  
+  UILabel* label = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, nav.navigationBar.frame.size.width-20, 80)];
+  label.tag = 1002;
+  label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+  //label.font = [UIFont boldSystemFontOfSize:22];
+  label.font = [UIFont fontWithName:@"Helvetica-Bold" size:24];
+  label.textColor = [UIColor whiteColor];
+  label.textAlignment = NSTextAlignmentRight;
+  label.numberOfLines = 2;
+  [navigationbar addSubview:label];
+  [label release];
+  
+  [nav.view insertSubview:navigationbar atIndex:[nav.view.subviews count]-1];
+  [navigationbar release];
+  
   self.viewController = nav;
   [nav release];
   [romBrowser release];

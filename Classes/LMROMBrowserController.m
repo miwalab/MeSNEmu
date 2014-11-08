@@ -13,6 +13,7 @@
 #import "LMEmulatorController.h"
 #import "LMSaveManager.h"
 #import "LMSettingsController.h"
+#include <stdlib.h>
 
 static NSString* const LMFileOrganizationVersion = @"LMFileOrganizationVersion";
 static int const LMFileOrganizationVersionNumber = 1;
@@ -616,7 +617,7 @@ static int const LMFileOrganizationVersionNumber = 1;
   }
   else {
     if(item.imageFilePath) {
-      return 100.0;
+      return 80.0;
     } else {
       return 44.0;
     }
@@ -639,15 +640,6 @@ static int const LMFileOrganizationVersionNumber = 1;
     [view setBackgroundColor:[UIColor colorWithWhite:250/255.0 alpha:1.0]];
     [view addSubview:label];
     [label release];
-    
-    /*CAGradientLayer *gradient = [CAGradientLayer layer];
-    UIColor *startColor = [UIColor colorWithRed:237/255.0 green:237/255.0 blue:237/255.0 alpha:1];
-    UIColor *endColor = [UIColor colorWithRed:255/255.0 green:255/255.0 blue:255/255.0 alpha:1];
-    gradient.frame = CGRectMake(0, 0, 60, 34.0);
-    gradient.colors = @[(id)startColor.CGColor,(id)endColor.CGColor];
-    gradient.startPoint = CGPointMake(0.0f, 1.0f);
-    gradient.endPoint = CGPointMake(1.0f, 1.0f);
-    [view.layer insertSublayer:gradient atIndex:0];*/
     return view;
   }
   return nil;
@@ -834,21 +826,33 @@ static int const LMFileOrganizationVersionNumber = 1;
     self.tableView.sectionIndexTrackingBackgroundColor = [UIColor colorWithWhite:245/255.0 alpha:1.0];
     self.searchDisplayController.searchResultsTableView.separatorInset = UIEdgeInsetsZero;
     self.navigationController.view.backgroundColor = [UIColor whiteColor];
-    
-    //self.searchDisplayController.searchResultsTableView.backgroundColor = [UIColor clearColor];
-    /*CAGradientLayer *gradient = [CAGradientLayer layer];
-    UIColor *startColor = [UIColor colorWithRed:237/255.0 green:237/255.0 blue:237/255.0 alpha:1];
-    UIColor *endColor = [UIColor colorWithRed:255/255.0 green:255/255.0 blue:255/255.0 alpha:1];
-    gradient.frame = CGRectMake(0, 0, 60, self.navigationController.view.frame.size.height);
-    gradient.colors = @[(id)startColor.CGColor,(id)endColor.CGColor];
-    gradient.startPoint = CGPointMake(0.0f, 1.0f);
-    gradient.endPoint = CGPointMake(1.0f, 1.0f);
-    [self.navigationController.view.layer insertSublayer:gradient atIndex:0];*/
-    //[self.searchDisplayController.searchResultsTableView.layer insertSublayer:gradient atIndex:0];
   }
   else
   {
-    self.title = _detailsItem.displayName;
+    UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.view viewWithTag:1000];
+    UIImageView* imageview = (UIImageView*)[navigationbar viewWithTag:1001];
+    UILabel* label = (UILabel*)[navigationbar viewWithTag:1002];
+    self.tableView.contentInset = UIEdgeInsetsMake(navigationbar.frame.size.height, 0, 0, 0);
+    self.tableView.scrollIndicatorInsets = UIEdgeInsetsMake(navigationbar.frame.size.height, 0, 0, 0);
+    
+    NSShadow *shadow = [[NSShadow alloc] init];
+    shadow.shadowOffset = CGSizeMake(0, 0.6f);
+    shadow.shadowColor = [UIColor colorWithWhite:0 alpha:0.4];
+    shadow.shadowBlurRadius = 3.0f;
+    label.attributedText = [[NSAttributedString alloc] initWithString:_detailsItem.displayName
+                                                           attributes:@{NSForegroundColorAttributeName:label.textColor,
+                                                                        NSShadowAttributeName:shadow,
+                                                                        NSKernAttributeName:@-1.0,
+                                                                        NSFontAttributeName:label.font}];
+    
+    if(_detailsItem.imageFilePath) {
+      UIImage *image = [UIImage imageWithContentsOfFile:_detailsItem.imageFilePath];
+      CGImageRef cliped = CGImageCreateWithImageInRect(image.CGImage, CGRectMake(arc4random_uniform(256-60), arc4random_uniform(224-60), 60, 60));
+      imageview.image = [UIImage imageWithCGImage:cliped];
+      CGImageRelease(cliped);
+    } else {
+      imageview.image = nil;
+    }
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"Cell"];
   }
   
@@ -894,6 +898,22 @@ static int const LMFileOrganizationVersionNumber = 1;
     });
   }
   
+  UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.view viewWithTag:1000];
+  if (navigationbar) {
+    if(_detailsItem == nil) {
+      [UIView animateWithDuration:0.3
+                       animations:^{
+                         navigationbar.frame = (CGRect){0, -navigationbar.frame.size.height-1, navigationbar.frame.size};
+                       }];
+    }
+    else {
+      [UIView animateWithDuration:0.3
+                       animations:^{
+                         navigationbar.frame = (CGRect){0, self.navigationController.navigationBar.frame.size.height+[[UIApplication sharedApplication] statusBarFrame].size.height, navigationbar.frame.size};
+                       }];
+    }
+  }
+  
   //_fsTimer = [[NSTimer timerWithTimeInterval:5 target:self selector:@selector(LM_reloadROMList) userInfo:nil repeats:YES] retain];
   //[[NSRunLoop mainRunLoop] addTimer:_fsTimer forMode:NSDefaultRunLoopMode];
 }
@@ -907,8 +927,8 @@ static int const LMFileOrganizationVersionNumber = 1;
 {
   [super viewWillDisappear:animated];
   
-  [_fsTimer invalidate];
-  _fsTimer = nil;
+  //[_fsTimer invalidate];
+  //_fsTimer = nil;
 }
 
 - (BOOL)prefersStatusBarHidden
@@ -957,8 +977,8 @@ static int const LMFileOrganizationVersionNumber = 1;
   [_sramPath release];
   _sramPath = nil;
   
-  [_fsTimer invalidate];
-  _fsTimer = nil;
+  //[_fsTimer invalidate];
+  //_fsTimer = nil;
   
   [super dealloc];
 }
