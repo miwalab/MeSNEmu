@@ -75,7 +75,6 @@
   UILabel* label = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, nav.navigationBar.frame.size.width-20, 80)];
   label.tag = 1002;
   label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-  //label.font = [UIFont boldSystemFontOfSize:22];
   label.font = [UIFont fontWithName:@"Helvetica-Bold" size:24];
   label.textColor = [UIColor whiteColor];
   label.textAlignment = NSTextAlignmentRight;
@@ -83,7 +82,7 @@
   [navigationbar addSubview:label];
   [label release];
   
-  [nav.view insertSubview:navigationbar atIndex:[nav.view.subviews count]-1];
+  [nav.navigationBar insertSubview:navigationbar atIndex:0];
   [navigationbar release];
   
   self.viewController = nav;

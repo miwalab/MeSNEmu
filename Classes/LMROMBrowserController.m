@@ -24,14 +24,14 @@ static int const LMFileOrganizationVersionNumber = 1;
   NSString* _displayName;
   NSString* _displayDetails;
   NSString* _fileName;
-  NSString* _imageFilePath;
+  NSMutableArray* _imageFilePaths;
 }
 
 @property BOOL hasDetails;
 @property (retain) NSString* displayName;
 @property (retain) NSString* displayDetails;
 @property (retain) NSString* fileName;
-@property (retain) NSString* imageFilePath;
+@property (retain) NSMutableArray* imageFilePaths;
 
 + (BOOL)isROMExtension:(NSString*)lowerCaseExtension;
 @end
@@ -44,7 +44,7 @@ static int const LMFileOrganizationVersionNumber = 1;
 @synthesize displayName = _displayName;
 @synthesize displayDetails = _displayDetails;
 @synthesize fileName = _fileName;
-@synthesize imageFilePath = _imageFilePath;
+@synthesize imageFilePaths = _imageFilePaths;
 
 + (BOOL)isROMExtension:(NSString*)lowerCaseExtension
 {
@@ -61,7 +61,7 @@ static int const LMFileOrganizationVersionNumber = 1;
   self.displayName = nil;
   self.displayDetails = nil;
   self.fileName = nil;
-  self.imageFilePath = nil;
+  self.imageFilePaths = nil;
   [super dealloc];
 }
 
@@ -206,6 +206,7 @@ static int const LMFileOrganizationVersionNumber = 1;
         item.displayName = [file stringByDeletingPathExtension];
         item.fileName = file;
         item.displayDetails = @"-";
+        item.imageFilePaths = [NSMutableArray array];
         NSString* sramPath = [_sramPath stringByAppendingPathComponent:[[file stringByDeletingPathExtension] stringByAppendingPathExtension:@"srm"]];
         if([fm fileExistsAtPath:sramPath] == YES)
           item.hasDetails = YES;
@@ -261,7 +262,7 @@ static int const LMFileOrganizationVersionNumber = 1;
               NSString* imagePath = [_romPath stringByAppendingPathComponent:[[file2 stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"]];
               if([fm fileExistsAtPath:imagePath] == YES)
               {
-                item.imageFilePath = imagePath;
+                [item.imageFilePaths addObject:imagePath];
               }
               break;
             }
@@ -326,6 +327,7 @@ static int const LMFileOrganizationVersionNumber = 1;
       //romItem.displayName = NSLocalizedString(@"GAME_FILE", nil);
       //romItem.displayDetails = _detailsItem.displayName;
       romItem.fileName = _detailsItem.fileName;
+      romItem.imageFilePaths = [NSMutableArray array];
       [itemsList addObject:romItem];
       [romItem release];
     }
@@ -337,6 +339,7 @@ static int const LMFileOrganizationVersionNumber = 1;
       sramItem.displayName = NSLocalizedString(@"SRAM_FILE", nil);
       sramItem.fileName = [sramPath lastPathComponent];
       sramItem.displayDetails = sramItem.fileName;
+      sramItem.imageFilePaths = [NSMutableArray array];
       [itemsList addObject:sramItem];
       [sramItem release];
     }
@@ -355,6 +358,7 @@ static int const LMFileOrganizationVersionNumber = 1;
           hasSaves = YES;
         }
         LMFileListItem* saveItem = [[LMFileListItem alloc] init];
+        saveItem.imageFilePaths = [NSMutableArray array];
         int slot = [[[file stringByDeletingPathExtension] pathExtension] integerValue];
         if(slot == 0)
           saveItem.displayName = NSLocalizedString(@"LAST_PLAYED_SPOT", nil);
@@ -371,7 +375,10 @@ static int const LMFileOrganizationVersionNumber = 1;
         NSString* imagePath = [_romPath stringByAppendingPathComponent:[[file stringByDeletingPathExtension] stringByAppendingPathExtension:@"png"]];
         if([fm fileExistsAtPath:imagePath] == YES)
         {
-          saveItem.imageFilePath = imagePath;
+          [saveItem.imageFilePaths addObject:imagePath];
+          if (![_detailsItem.imageFilePaths containsObject:imagePath]) {
+            [_detailsItem.imageFilePaths addObject:imagePath];
+          }
         }
         [itemsList addObject:saveItem];
         [saveItem release];
@@ -526,8 +533,8 @@ static int const LMFileOrganizationVersionNumber = 1;
   cell.detailTextLabel.text = item.displayDetails;
   cell.accessoryType = UITableViewCellAccessoryNone;
 	
-  if(item.imageFilePath) {
-    cell.imageView.image = [UIImage imageWithContentsOfFile:item.imageFilePath];
+  if([item.imageFilePaths count]>0) {
+    cell.imageView.image = [UIImage imageWithContentsOfFile:[item.imageFilePaths objectAtIndex:0]];
   } else {
     cell.imageView.image = nil;
   }
@@ -587,8 +594,8 @@ static int const LMFileOrganizationVersionNumber = 1;
     LMFileListItem* item = [self LM_romItemForTableView:tableView indexPath:indexPath];
     NSString* extension = [[item.fileName pathExtension] lowercaseString];
     [[NSFileManager defaultManager] removeItemAtPath:[_romPath stringByAppendingPathComponent:item.fileName] error:nil];
-    if ([extension compare:@"frz"] == NSOrderedSame && item.imageFilePath != nil) {
-      [[NSFileManager defaultManager] removeItemAtPath:item.imageFilePath error:nil];
+    if ([extension compare:@"frz"] == NSOrderedSame && [item.imageFilePaths count]>0) {
+      [[NSFileManager defaultManager] removeItemAtPath:[item.imageFilePaths objectAtIndex:0] error:nil];
     }
     [self LM_reloadROMList:NO];
     
@@ -616,7 +623,7 @@ static int const LMFileOrganizationVersionNumber = 1;
     return 70.0;
   }
   else {
-    if(item.imageFilePath) {
+    if([item.imageFilePaths count]>0) {
       return 80.0;
     } else {
       return 44.0;
@@ -829,30 +836,11 @@ static int const LMFileOrganizationVersionNumber = 1;
   }
   else
   {
-    UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.view viewWithTag:1000];
-    UIImageView* imageview = (UIImageView*)[navigationbar viewWithTag:1001];
-    UILabel* label = (UILabel*)[navigationbar viewWithTag:1002];
+    UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
+    //UIImageView* imageview = (UIImageView*)[navigationbar viewWithTag:1001];
+    //imageview.animationDuration = 60.0f;
     self.tableView.contentInset = UIEdgeInsetsMake(navigationbar.frame.size.height, 0, 0, 0);
     self.tableView.scrollIndicatorInsets = UIEdgeInsetsMake(navigationbar.frame.size.height, 0, 0, 0);
-    
-    NSShadow *shadow = [[NSShadow alloc] init];
-    shadow.shadowOffset = CGSizeMake(0, 0.6f);
-    shadow.shadowColor = [UIColor colorWithWhite:0 alpha:0.4];
-    shadow.shadowBlurRadius = 3.0f;
-    label.attributedText = [[NSAttributedString alloc] initWithString:_detailsItem.displayName
-                                                           attributes:@{NSForegroundColorAttributeName:label.textColor,
-                                                                        NSShadowAttributeName:shadow,
-                                                                        NSKernAttributeName:@-1.0,
-                                                                        NSFontAttributeName:label.font}];
-    
-    if(_detailsItem.imageFilePath) {
-      UIImage *image = [UIImage imageWithContentsOfFile:_detailsItem.imageFilePath];
-      CGImageRef cliped = CGImageCreateWithImageInRect(image.CGImage, CGRectMake(arc4random_uniform(256-60), arc4random_uniform(224-60), 60, 60));
-      imageview.image = [UIImage imageWithCGImage:cliped];
-      CGImageRelease(cliped);
-    } else {
-      imageview.image = nil;
-    }
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"Cell"];
   }
   
@@ -898,24 +886,61 @@ static int const LMFileOrganizationVersionNumber = 1;
     });
   }
   
-  UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.view viewWithTag:1000];
+  UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
   if (navigationbar) {
     if(_detailsItem == nil) {
+      UIImageView* imageview = (UIImageView*)[navigationbar viewWithTag:1001];
+      [imageview stopAnimating];
+      
       [UIView animateWithDuration:0.3
                        animations:^{
                          navigationbar.frame = (CGRect){0, -navigationbar.frame.size.height-1, navigationbar.frame.size};
                        }];
     }
     else {
+      UILabel* label = (UILabel*)[navigationbar viewWithTag:1002];
+      UIImageView* imageview = (UIImageView*)[navigationbar viewWithTag:1001];
+      
+      NSShadow *shadow = [[NSShadow alloc] init];
+      shadow.shadowOffset = CGSizeMake(0, 0.6f);
+      shadow.shadowColor = [UIColor colorWithWhite:0 alpha:0.4];
+      shadow.shadowBlurRadius = 3.0f;
+      label.attributedText = [[NSAttributedString alloc] initWithString:_detailsItem.displayName
+                                                             attributes:@{NSForegroundColorAttributeName:label.textColor,
+                                                                          NSShadowAttributeName:shadow,
+                                                                          NSKernAttributeName:@-1.0,
+                                                                          NSFontAttributeName:label.font}];
+      
+      if([_detailsItem.imageFilePaths count]>0) {
+        NSMutableArray *imagelist = [NSMutableArray array];
+        for (id imagePath in _detailsItem.imageFilePaths) {
+          UIImage *image = [UIImage imageWithContentsOfFile:imagePath];
+          CGImageRef cliped = CGImageCreateWithImageInRect(image.CGImage, CGRectMake(arc4random_uniform(256-60), arc4random_uniform(224-60), 60, 60));
+          [imagelist addObject:[UIImage imageWithCGImage:cliped]];
+          CGImageRelease(cliped);
+        }
+        imageview.animationImages = imagelist;
+        imageview.animationDuration = [imagelist count]*5;
+        imageview.image = [imagelist objectAtIndex:0];
+        [imageview startAnimating];
+      } else {
+        imageview.image = nil;
+      }
+      
       [UIView animateWithDuration:0.3
                        animations:^{
-                         navigationbar.frame = (CGRect){0, self.navigationController.navigationBar.frame.size.height+[[UIApplication sharedApplication] statusBarFrame].size.height, navigationbar.frame.size};
+                         navigationbar.frame = (CGRect){0, self.navigationController.navigationBar.frame.size.height, navigationbar.frame.size};
                        }];
     }
   }
-  
-  //_fsTimer = [[NSTimer timerWithTimeInterval:5 target:self selector:@selector(LM_reloadROMList) userInfo:nil repeats:YES] retain];
-  //[[NSRunLoop mainRunLoop] addTimer:_fsTimer forMode:NSDefaultRunLoopMode];
+}
+
+-(void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration
+{
+  if(_detailsItem != nil) {
+    UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
+    navigationbar.frame = (CGRect){0, self.navigationController.navigationBar.frame.size.height, navigationbar.frame.size};
+  }
 }
 
 - (void)viewDidAppear:(BOOL)animated
@@ -927,8 +952,11 @@ static int const LMFileOrganizationVersionNumber = 1;
 {
   [super viewWillDisappear:animated];
   
-  //[_fsTimer invalidate];
-  //_fsTimer = nil;
+  if(_detailsItem != nil) {
+    UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
+    UIImageView* imageview = (UIImageView*)[navigationbar viewWithTag:1001];
+    [imageview stopAnimating];
+  }
 }
 
 - (BOOL)prefersStatusBarHidden
@@ -976,9 +1004,6 @@ static int const LMFileOrganizationVersionNumber = 1;
   _romPath = nil;
   [_sramPath release];
   _sramPath = nil;
-  
-  //[_fsTimer invalidate];
-  //_fsTimer = nil;
   
   [super dealloc];
 }

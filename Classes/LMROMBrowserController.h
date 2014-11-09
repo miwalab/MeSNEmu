@@ -23,8 +23,6 @@
   NSArray* _filteredRomList;
   NSArray* _filteredSectionTitles;
   NSArray* _filteredSectionMarkers;
-  
-  //NSTimer* _fsTimer;
 }
 
 @property (retain) LMFileListItem* detailsItem;
