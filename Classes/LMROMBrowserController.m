@@ -785,6 +785,57 @@ static int const LMFileOrganizationVersionNumber = 1;
 
 #pragma mark -
 
+@interface LMROMImageView : UIImageView
+{
+  BOOL isFadeAnimating;
+}
+- (void)startFadeAnimating;
+- (void)stopFadeAnimating;
+
+@end
+
+@implementation LMROMImageView
+
+- (void)startFadeAnimating:(NSNumber*)index
+{
+  if ([self.animationImages count]>1) {
+    int n = ([self.animationImages count]<=[index intValue]) ? 0 : [index intValue];
+    CATransition* transition = [CATransition animation];
+    transition.duration = 1.0f;
+    transition.type = kCATransitionFade;
+    [self.layer addAnimation:transition forKey:nil];
+    self.image = [self.animationImages objectAtIndex:n];
+    if (isFadeAnimating) {
+      [self performSelector:@selector(startFadeAnimating:)
+                 withObject:[NSNumber numberWithInt:n+1]
+                 afterDelay:5.0];
+    }
+  }
+}
+
+- (void)startFadeAnimating
+{
+  isFadeAnimating = YES;
+  [NSObject cancelPreviousPerformRequestsWithTarget:self];
+  [self.layer removeAllAnimations];
+  if ([self.animationImages count]>0) {
+    //self.image = [self.animationImages objectAtIndex:0];
+    //[self startFadeAnimating:@0];
+  }
+}
+
+- (void)stopFadeAnimating
+{
+  isFadeAnimating = NO;
+  [NSObject cancelPreviousPerformRequestsWithTarget:self];
+  [self.layer removeAllAnimations];
+  self.image = nil;
+}
+
+@end
+
+#pragma mark -
+
 @implementation LMROMBrowserController(UIViewController)
 
 - (id)initWithStyle:(UITableViewStyle)style
@@ -837,10 +888,57 @@ static int const LMFileOrganizationVersionNumber = 1;
   else
   {
     UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
-    //UIImageView* imageview = (UIImageView*)[navigationbar viewWithTag:1001];
-    //imageview.animationDuration = 60.0f;
-    self.tableView.contentInset = UIEdgeInsetsMake(navigationbar.frame.size.height, 0, 0, 0);
-    self.tableView.scrollIndicatorInsets = UIEdgeInsetsMake(navigationbar.frame.size.height, 0, 0, 0);
+    if (navigationbar==nil) {
+      UINavigationBar* navigationbar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, -100, self.navigationController.navigationBar.frame.size.width, 100)];
+      navigationbar.tag = 1000;
+      navigationbar.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleWidth;
+      navigationbar.backgroundColor = [UIColor clearColor];
+      
+      LMROMImageView* imageview = [[LMROMImageView alloc] initWithFrame:CGRectMake(0, 0, self.navigationController.navigationBar.frame.size.width, 100)];
+      imageview.tag = 1001;
+      imageview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+      imageview.contentMode = UIViewContentModeScaleAspectFill;
+      imageview.clipsToBounds = YES;
+      imageview.layer.magnificationFilter = kCAFilterNearest;
+      imageview.alpha = 0.9;
+      [navigationbar addSubview:imageview];
+      [imageview release];
+      
+      UIImageView* gradientimageview = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, self.navigationController.navigationBar.frame.size.width, 100)];
+      gradientimageview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+      gradientimageview.contentMode = UIViewContentModeScaleAspectFill;
+      gradientimageview.clipsToBounds = YES;
+      UIGraphicsBeginImageContextWithOptions(CGSizeMake(gradientimageview.frame.size.width, gradientimageview.frame.size.height), NO, gradientimageview.image.scale);
+      CAGradientLayer *gradient = [CAGradientLayer layer];
+      UIColor *startColor = [UIColor colorWithWhite:0 alpha:0];
+      UIColor *endColor = [UIColor colorWithWhite:0 alpha:0.6];
+      gradient.frame = CGRectMake(0, 0, gradientimageview.frame.size.width, gradientimageview.frame.size.height);
+      gradient.colors = @[(id)startColor.CGColor,(id)endColor.CGColor];
+      gradient.startPoint = CGPointMake(0.0f, 1.0f);
+      gradient.endPoint = CGPointMake(1.0f, 1.0f);
+      [gradientimageview.layer insertSublayer:gradient atIndex:0];
+      [gradientimageview.layer renderInContext:UIGraphicsGetCurrentContext()];
+      gradientimageview.image = UIGraphicsGetImageFromCurrentImageContext();
+      UIGraphicsEndImageContext();
+      [gradient removeFromSuperlayer];
+      [navigationbar addSubview:gradientimageview];
+      [gradientimageview release];
+      
+      UILabel* label = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, self.navigationController.navigationBar.frame.size.width-20, 80)];
+      label.tag = 1002;
+      label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+      label.font = [UIFont fontWithName:@"Helvetica-Bold" size:24];
+      label.textColor = [UIColor whiteColor];
+      label.textAlignment = NSTextAlignmentRight;
+      label.numberOfLines = 2;
+      [navigationbar addSubview:label];
+      [label release];
+      
+      [self.navigationController.navigationBar insertSubview:navigationbar atIndex:0];
+      [navigationbar release];
+    }
+    self.tableView.contentInset = UIEdgeInsetsMake(100, 0, 0, 0);
+    self.tableView.scrollIndicatorInsets = UIEdgeInsetsMake(100, 0, 0, 0);
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"Cell"];
   }
   
@@ -889,8 +987,8 @@ static int const LMFileOrganizationVersionNumber = 1;
   UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
   if (navigationbar) {
     if(_detailsItem == nil) {
-      UIImageView* imageview = (UIImageView*)[navigationbar viewWithTag:1001];
-      [imageview stopAnimating];
+      LMROMImageView* imageview = (LMROMImageView*)[navigationbar viewWithTag:1001];
+      [imageview stopFadeAnimating];
       
       [UIView animateWithDuration:0.3
                        animations:^{
@@ -899,7 +997,7 @@ static int const LMFileOrganizationVersionNumber = 1;
     }
     else {
       UILabel* label = (UILabel*)[navigationbar viewWithTag:1002];
-      UIImageView* imageview = (UIImageView*)[navigationbar viewWithTag:1001];
+      LMROMImageView* imageview = (LMROMImageView*)[navigationbar viewWithTag:1001];
       
       NSShadow *shadow = [[NSShadow alloc] init];
       shadow.shadowOffset = CGSizeMake(0, 0.6f);
@@ -922,7 +1020,7 @@ static int const LMFileOrganizationVersionNumber = 1;
         imageview.animationImages = imagelist;
         imageview.animationDuration = [imagelist count]*5;
         imageview.image = [imagelist objectAtIndex:0];
-        [imageview startAnimating];
+        [imageview startFadeAnimating];
       } else {
         imageview.image = nil;
       }
@@ -954,8 +1052,8 @@ static int const LMFileOrganizationVersionNumber = 1;
   
   if(_detailsItem != nil) {
     UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
-    UIImageView* imageview = (UIImageView*)[navigationbar viewWithTag:1001];
-    [imageview stopAnimating];
+    LMROMImageView* imageview = (LMROMImageView*)[navigationbar viewWithTag:1001];
+    [imageview stopFadeAnimating];
   }
 }
 
