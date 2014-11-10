@@ -798,17 +798,20 @@ static int const LMFileOrganizationVersionNumber = 1;
 
 - (void)startFadeAnimating:(NSNumber*)index
 {
-  if ([self.animationImages count]>1) {
+  if ([self.animationImages count]>0) {
+    if ([index intValue]>0) {
+      CATransition* transition = [CATransition animation];
+      transition.duration = 2.0f;
+      transition.type = kCATransitionFade;
+      transition.removedOnCompletion = YES;
+      [self.layer addAnimation:transition forKey:nil];
+    }
     int n = ([self.animationImages count]<=[index intValue]) ? 0 : [index intValue];
-    CATransition* transition = [CATransition animation];
-    transition.duration = 1.0f;
-    transition.type = kCATransitionFade;
-    [self.layer addAnimation:transition forKey:nil];
     self.image = [self.animationImages objectAtIndex:n];
-    if (isFadeAnimating) {
+    if ([self.animationImages count]>1 && isFadeAnimating) {
       [self performSelector:@selector(startFadeAnimating:)
                  withObject:[NSNumber numberWithInt:n+1]
-                 afterDelay:5.0];
+                 afterDelay:self.animationDuration/([self.animationImages count]-1)];
     }
   }
 }
@@ -817,10 +820,8 @@ static int const LMFileOrganizationVersionNumber = 1;
 {
   isFadeAnimating = YES;
   [NSObject cancelPreviousPerformRequestsWithTarget:self];
-  [self.layer removeAllAnimations];
   if ([self.animationImages count]>0) {
-    //self.image = [self.animationImages objectAtIndex:0];
-    //[self startFadeAnimating:@0];
+    [self startFadeAnimating:@0];
   }
 }
 
@@ -828,7 +829,6 @@ static int const LMFileOrganizationVersionNumber = 1;
 {
   isFadeAnimating = NO;
   [NSObject cancelPreviousPerformRequestsWithTarget:self];
-  [self.layer removeAllAnimations];
   self.image = nil;
 }
 
@@ -1018,8 +1018,7 @@ static int const LMFileOrganizationVersionNumber = 1;
           CGImageRelease(cliped);
         }
         imageview.animationImages = imagelist;
-        imageview.animationDuration = [imagelist count]*5;
-        imageview.image = [imagelist objectAtIndex:0];
+        imageview.animationDuration = ([imagelist count]-1)*6;
         [imageview startFadeAnimating];
       } else {
         imageview.image = nil;
