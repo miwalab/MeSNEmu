@@ -83,6 +83,8 @@ void SISaveSRAM();
 void SILoadCheatFile();
 void SIDeleteCheats();
 
+void SIMakeRomInfoText(char* rom_filename, char *romtext);
+  
 // Notifications to the emulator
 // =============================
   

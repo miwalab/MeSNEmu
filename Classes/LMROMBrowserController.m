@@ -25,6 +25,7 @@ static int const LMFileOrganizationVersionNumber = 1;
   NSString* _displayDetails;
   NSString* _fileName;
   NSMutableArray* _imageFilePaths;
+  NSDictionary* _romInfo;
 }
 
 @property BOOL hasDetails;
@@ -32,6 +33,7 @@ static int const LMFileOrganizationVersionNumber = 1;
 @property (retain) NSString* displayDetails;
 @property (retain) NSString* fileName;
 @property (retain) NSMutableArray* imageFilePaths;
+@property (retain) NSDictionary* romInfo;
 
 + (BOOL)isROMExtension:(NSString*)lowerCaseExtension;
 @end
@@ -322,14 +324,19 @@ static int const LMFileOrganizationVersionNumber = 1;
     {
       [tempSectionTitles addObject:NSLocalizedString(@"CARTRIDGE_FILES", nil)];
       [tempSectionMarkers addObject:[NSNumber numberWithInt:[itemsList count]]];
-      LMFileListItem* romItem = [[LMFileListItem alloc] init];
-      romItem.displayName = _detailsItem.displayName;
-      //romItem.displayName = NSLocalizedString(@"GAME_FILE", nil);
-      //romItem.displayDetails = _detailsItem.displayName;
-      romItem.fileName = _detailsItem.fileName;
-      romItem.imageFilePaths = [NSMutableArray array];
-      [itemsList addObject:romItem];
-      [romItem release];
+      LMFileListItem* romData = [[LMFileListItem alloc] init];
+      romData.fileName = _detailsItem.fileName;
+      romData.displayName = [NSString stringWithFormat:
+                             @"%@, %@, %@, %@, %@",
+                             _detailsItem.romInfo[@"Cart Name"],
+                             //_detailsItem.romInfo[@"Contents"],
+                             _detailsItem.romInfo[@"Size (calculated)"],
+                             _detailsItem.romInfo[@"Revision"],
+                             _detailsItem.romInfo[@"Licensee"],
+                             _detailsItem.romInfo[@"Region"]];
+      [itemsList addObject:romData];
+      [romData release];
+      
     }
     // sram
     NSString* sramPath = [_sramPath stringByAppendingPathComponent:[[_detailsItem.fileName stringByDeletingPathExtension] stringByAppendingPathExtension:@"srm"]];
@@ -534,7 +541,13 @@ static int const LMFileOrganizationVersionNumber = 1;
   cell.accessoryType = UITableViewCellAccessoryNone;
 	
   if([item.imageFilePaths count]>0) {
-    cell.imageView.image = [UIImage imageWithContentsOfFile:[item.imageFilePaths objectAtIndex:0]];
+    dispatch_async(dispatch_get_global_queue(0, 0), ^{
+      UIImage* image = [UIImage imageWithContentsOfFile:[item.imageFilePaths objectAtIndex:0]];
+      dispatch_async(dispatch_get_main_queue(), ^{
+        cell.imageView.image = image;
+        [cell setNeedsLayout];
+      });
+    });
   } else {
     cell.imageView.image = nil;
   }
@@ -577,6 +590,24 @@ static int const LMFileOrganizationVersionNumber = 1;
     LMROMBrowserController* detailsBrowser = [[LMROMBrowserController alloc] initWithStyle:UITableViewStyleGrouped];
     LMFileListItem* item = [self LM_romItemForTableView:tableView indexPath:indexPath];
     detailsBrowser.detailsItem = item;
+    
+    const char* originalString = [item.fileName UTF8String];
+    char* romFileNameCString = (char*)calloc(strlen(originalString)+1, sizeof(char));
+    strcpy(romFileNameCString, originalString);
+    originalString = nil;
+
+    char* romInfoCString = (char*)calloc(1024, sizeof(char));
+    SIMakeRomInfoText(romFileNameCString, romInfoCString);
+
+    NSMutableDictionary* dic = [NSMutableDictionary dictionary];
+    NSArray* lines = [[NSString stringWithCString:romInfoCString encoding:NSUTF8StringEncoding] componentsSeparatedByString:@"\n"];
+    for (NSString *line in lines) {
+      NSArray *values = [line componentsSeparatedByString:@": "];
+      [dic setObject:[[values objectAtIndex:1] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]
+              forKey:[[values objectAtIndex:0] stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]]];
+    }
+    item.romInfo = [dic copy];
+    
     [self.navigationController pushViewController:detailsBrowser animated:YES];
     [detailsBrowser release];
   }
@@ -829,7 +860,6 @@ static int const LMFileOrganizationVersionNumber = 1;
 {
   isFadeAnimating = NO;
   [NSObject cancelPreviousPerformRequestsWithTarget:self];
-  self.image = nil;
 }
 
 @end
@@ -884,6 +914,14 @@ static int const LMFileOrganizationVersionNumber = 1;
     self.tableView.sectionIndexTrackingBackgroundColor = [UIColor colorWithWhite:245/255.0 alpha:1.0];
     self.searchDisplayController.searchResultsTableView.separatorInset = UIEdgeInsetsZero;
     self.navigationController.view.backgroundColor = [UIColor whiteColor];
+    
+    UILabel *footer = [[UILabel alloc] initWithFrame:CGRectMake(0, 0, self.tableView.frame.size.width, 50)];
+    footer.backgroundColor = [UIColor clearColor];
+    footer.textColor = [UIColor grayColor];
+    footer.font = [UIFont systemFontOfSize:18];
+    footer.textAlignment = NSTextAlignmentCenter;
+    self.tableView.tableFooterView = footer;
+    [footer release];
   }
   else
   {
@@ -900,7 +938,6 @@ static int const LMFileOrganizationVersionNumber = 1;
       imageview.contentMode = UIViewContentModeScaleAspectFill;
       imageview.clipsToBounds = YES;
       imageview.layer.magnificationFilter = kCAFilterNearest;
-      imageview.alpha = 0.9;
       [navigationbar addSubview:imageview];
       [imageview release];
       
@@ -927,7 +964,7 @@ static int const LMFileOrganizationVersionNumber = 1;
       UILabel* label = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, self.navigationController.navigationBar.frame.size.width-20, 80)];
       label.tag = 1002;
       label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-      label.font = [UIFont fontWithName:@"Helvetica-Bold" size:24];
+      label.font = [UIFont fontWithName:@"Helvetica-Bold" size:22];
       label.textColor = [UIColor whiteColor];
       label.textAlignment = NSTextAlignmentRight;
       label.numberOfLines = 2;
@@ -982,6 +1019,10 @@ static int const LMFileOrganizationVersionNumber = 1;
     dispatch_after(0, dispatch_get_main_queue(), ^{
       [self.tableView deselectRowAtIndexPath:indexPath animated:YES];
     });
+  }
+  
+  if(_detailsItem == nil) {
+    [(UILabel*)self.tableView.tableFooterView setText:[NSString stringWithFormat:@"%d %@",[_romList count], NSLocalizedString(@"ROMS", nil)]];
   }
   
   UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
