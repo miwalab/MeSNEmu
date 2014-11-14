@@ -76,13 +76,185 @@ static int const LMFileOrganizationVersionNumber = 1;
 
 #pragma mark -
 
-@interface LMROMBrowserController(Privates) <UISearchDisplayDelegate>
+@interface LMROMBrowserListCell : UITableViewCell
+@end
+
+@implementation LMROMBrowserListCell
+
+- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
+{
+  self = [super initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:reuseIdentifier];
+  if (self) {
+    UIButton* button = [UIButton buttonWithType:UIButtonTypeCustom];
+    
+    CGFloat border = 1.0;
+    CGFloat radius = 4.0;
+    button.frame = CGRectMake(0, 0, 56, 26);
+    button.tag = 100;
+    
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(button.frame.size.width, button.frame.size.height), NO, button.currentImage.scale);
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetFillColorWithColor(context, [UIColor colorWithWhite:1.0 alpha:0.0].CGColor);
+    CGContextSetStrokeColorWithColor(context, self.tintColor.CGColor);
+    CGContextSetLineWidth(context, border);
+    
+    CGRect rrect = CGRectMake(0, 0, button.frame.size.width, button.frame.size.height);
+    CGFloat minx = CGRectGetMinX(rrect)+(border/2), midx = CGRectGetMidX(rrect), maxx = CGRectGetMaxX(rrect)-(border/2);
+    CGFloat miny = CGRectGetMinY(rrect)+(border/2), midy = CGRectGetMidY(rrect), maxy = CGRectGetMaxY(rrect)-(border/2);
+    
+    CGContextMoveToPoint(context, minx, midy);
+    CGContextAddArcToPoint(context, minx, miny, midx, miny, radius);
+    CGContextAddArcToPoint(context, maxx, miny, maxx, midy, radius);
+    CGContextAddArcToPoint(context, maxx, maxy, midx, maxy, radius);
+    CGContextAddArcToPoint(context, minx, maxy, minx, midy, radius);
+    CGContextClosePath(context);
+    CGContextDrawPath(context, kCGPathFillStroke);
+    CGContextFillPath(context);
+    [button setBackgroundImage:UIGraphicsGetImageFromCurrentImageContext() forState:UIControlStateNormal];
+    UIGraphicsEndImageContext();
+    
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(button.frame.size.width, button.frame.size.height), NO, button.currentImage.scale);
+    CGContextRef context2 = UIGraphicsGetCurrentContext();
+    CGContextSetFillColorWithColor(context2, self.tintColor.CGColor);
+    CGContextSetStrokeColorWithColor(context2, self.tintColor.CGColor);
+    CGContextSetLineWidth(context2, border);
+    
+    CGContextMoveToPoint(context2, minx, midy);
+    CGContextAddArcToPoint(context2, minx, miny, midx, miny, radius);
+    CGContextAddArcToPoint(context2, maxx, miny, maxx, midy, radius);
+    CGContextAddArcToPoint(context2, maxx, maxy, midx, maxy, radius);
+    CGContextAddArcToPoint(context2, minx, maxy, minx, midy, radius);
+    CGContextClosePath(context2);
+    CGContextDrawPath(context2, kCGPathFillStroke);
+    CGContextFillPath(context2);
+    [button setBackgroundImage:UIGraphicsGetImageFromCurrentImageContext() forState:UIControlStateHighlighted];
+    UIGraphicsEndImageContext();
+    
+    button.titleLabel.font = [UIFont boldSystemFontOfSize:12];
+    [button setTitleColor:self.tintColor forState:UIControlStateNormal];
+    [button setTitleColor:[UIColor whiteColor] forState:UIControlStateHighlighted];
+    [button setTitle:NSLocalizedString(@"PLAY", nil) forState:UIControlStateNormal];
+    [button setTitle:NSLocalizedString(@"PLAY", nil) forState:UIControlStateHighlighted];
+    [button setTitleEdgeInsets:UIEdgeInsetsMake(2, 0, 0, 0)];
+    
+    [button addTarget:self action:@selector(onTapPlayButton:) forControlEvents:UIControlEventTouchUpInside];
+    
+    [self addSubview:button];
+    
+    UILabel* label = [[[UILabel alloc] init] autorelease];
+    label.tag = 101;
+    label.text = NSLocalizedString(@"LAST_PLAYED_SPOT", nil);
+    label.frame = CGRectMake(0, 0, 60, 16);
+    label.font = [UIFont systemFontOfSize:10];
+    label.textColor = [UIColor grayColor];
+    [self addSubview:label];
+  }
+  return self;
+}
+
+- (void)layoutSubviews
+{
+  [super layoutSubviews];
+  
+  CGSize size = self.contentView.frame.size;
+  UIButton* button = (UIButton*)[self viewWithTag:100];
+  UILabel* label = (UILabel*)[self viewWithTag:101];
+  
+  button.frame = (CGRect){size.width-button.frame.size.width-10, 22, button.frame.size};
+  self.imageView.frame = CGRectMake(16, 10, 57, 50);
+  self.imageView.backgroundColor = [UIColor whiteColor];
+  [self.textLabel setFont:[UIFont systemFontOfSize:14]];
+  [self.textLabel setTextColor:[UIColor blackColor]];
+  
+  [self.detailTextLabel setFont:[UIFont systemFontOfSize:12]];
+  [self.detailTextLabel setTextColor:self.tintColor];
+  [self.detailTextLabel setTextAlignment:NSTextAlignmentLeft];
+  self.textLabel.frame = CGRectMake(84, 10, size.width-80-10-(size.width-button.frame.origin.x), 30);
+  [label sizeToFit];
+  label.frame = CGRectMake(84, 40, label.frame.size.width, 16);
+  self.detailTextLabel.frame = CGRectMake(84+label.frame.size.width+5, 40, self.textLabel.frame.size.width-(label.frame.size.width+5), 16);
+  self.imageView.contentMode = UIViewContentModeScaleAspectFit;
+  self.backgroundColor = [UIColor clearColor];
+  self.separatorInset = UIEdgeInsetsMake(0, 16, 0, 0);
+}
+
+- (UIEdgeInsets)layoutMargins
+{
+  return UIEdgeInsetsMake(0, 0, 0, 0);
+}
+
+- (void)onTapPlayButton:(id)sender
+{
+  if ([(id <UITableViewDelegate>)[(UITableView *)self.superview.superview delegate] respondsToSelector:@selector(tableView:accessoryButtonTappedForRowWithIndexPath:)]) {
+    [(id <UITableViewDelegate>)[(UITableView *)self.superview.superview delegate] tableView:(UITableView *)self.superview.superview
+                                                   accessoryButtonTappedForRowWithIndexPath:[(UITableView *)self.superview.superview indexPathForCell:self]];
+  }
+}
 
 @end
 
 #pragma mark -
 
-@implementation LMROMBrowserController(Privates)
+@interface LMROMImageView : UIImageView
+{
+  BOOL isFadeAnimating;
+}
+- (void)startFadeAnimating;
+- (void)stopFadeAnimating;
+
+@end
+
+@implementation LMROMImageView
+
+- (void)startFadeAnimating:(NSNumber*)index
+{
+  if ([self.animationImages count]>0) {
+    if ([index intValue]>0) {
+      CATransition* transition = [CATransition animation];
+      transition.duration = 2.0f;
+      transition.type = kCATransitionFade;
+      transition.removedOnCompletion = YES;
+      [self.layer addAnimation:transition forKey:nil];
+    }
+    int n = ([self.animationImages count]<=[index intValue]) ? 0 : [index intValue];
+    self.image = [self.animationImages objectAtIndex:n];
+    if ([self.animationImages count]>1 && isFadeAnimating) {
+      [self performSelector:@selector(startFadeAnimating:)
+                 withObject:[NSNumber numberWithInt:n+1]
+                 afterDelay:self.animationDuration/([self.animationImages count]-1)];
+    }
+  }
+}
+
+- (void)startFadeAnimating
+{
+  isFadeAnimating = YES;
+  [NSObject cancelPreviousPerformRequestsWithTarget:self];
+  if ([self.animationImages count]>0) {
+    [self startFadeAnimating:@0];
+  }
+}
+
+- (void)stopFadeAnimating
+{
+  isFadeAnimating = NO;
+  [NSObject cancelPreviousPerformRequestsWithTarget:self];
+}
+
+@end
+
+#pragma mark -
+
+@implementation LMROMBrowserController
+
+@synthesize tableView = _tableView;
+@synthesize detailsItem = _detailsItem;
+
+/*@end
+
+#pragma mark -
+
+@implementation LMROMBrowserController(Privates)*/
 
 - (void)LM_moveLegacyFilesToDocumentsFolder
 {
@@ -450,19 +622,7 @@ static int const LMFileOrganizationVersionNumber = 1;
   return YES;
 }
 
-@end
-
-#pragma mark -
-
-@implementation LMROMBrowserController
-
-@synthesize detailsItem = _detailsItem;
-
-@end
-
-#pragma mark -
-
-@implementation LMROMBrowserController(UITableViewController)
+#pragma mark UITableViewDelegate,UITableViewDataSource
 
 - (NSArray*)sectionIndexTitlesForTableView:(UITableView*)tableView
 {
@@ -693,187 +853,15 @@ static int const LMFileOrganizationVersionNumber = 1;
   return UITableViewCellEditingStyleNone;
 }
 
-@end
-
 #pragma mark -
-
-@interface LMROMBrowserListCell : UITableViewCell
-@end
-
-@implementation LMROMBrowserListCell
-
-- (id)initWithStyle:(UITableViewCellStyle)style reuseIdentifier:(NSString *)reuseIdentifier
-{
-  self = [super initWithStyle:UITableViewCellStyleValue1 reuseIdentifier:reuseIdentifier];
-  if (self) {
-    UIButton* button = [UIButton buttonWithType:UIButtonTypeCustom];
-    
-    CGFloat border = 1.0;
-    CGFloat radius = 4.0;
-    button.frame = CGRectMake(0, 0, 56, 26);
-    button.tag = 100;
-    
-    UIGraphicsBeginImageContextWithOptions(CGSizeMake(button.frame.size.width, button.frame.size.height), NO, button.currentImage.scale);
-    CGContextRef context = UIGraphicsGetCurrentContext();
-    CGContextSetFillColorWithColor(context, [UIColor colorWithWhite:1.0 alpha:0.0].CGColor);
-    CGContextSetStrokeColorWithColor(context, self.tintColor.CGColor);
-    CGContextSetLineWidth(context, border);
-    
-    CGRect rrect = CGRectMake(0, 0, button.frame.size.width, button.frame.size.height);
-    CGFloat minx = CGRectGetMinX(rrect)+(border/2), midx = CGRectGetMidX(rrect), maxx = CGRectGetMaxX(rrect)-(border/2);
-    CGFloat miny = CGRectGetMinY(rrect)+(border/2), midy = CGRectGetMidY(rrect), maxy = CGRectGetMaxY(rrect)-(border/2);
-    
-    CGContextMoveToPoint(context, minx, midy);
-    CGContextAddArcToPoint(context, minx, miny, midx, miny, radius);
-    CGContextAddArcToPoint(context, maxx, miny, maxx, midy, radius);
-    CGContextAddArcToPoint(context, maxx, maxy, midx, maxy, radius);
-    CGContextAddArcToPoint(context, minx, maxy, minx, midy, radius);
-    CGContextClosePath(context);
-    CGContextDrawPath(context, kCGPathFillStroke);
-    CGContextFillPath(context);
-    [button setBackgroundImage:UIGraphicsGetImageFromCurrentImageContext() forState:UIControlStateNormal];
-    UIGraphicsEndImageContext();
-    
-    UIGraphicsBeginImageContextWithOptions(CGSizeMake(button.frame.size.width, button.frame.size.height), NO, button.currentImage.scale);
-    CGContextRef context2 = UIGraphicsGetCurrentContext();
-    CGContextSetFillColorWithColor(context2, self.tintColor.CGColor);
-    CGContextSetStrokeColorWithColor(context2, self.tintColor.CGColor);
-    CGContextSetLineWidth(context2, border);
-    
-    CGContextMoveToPoint(context2, minx, midy);
-    CGContextAddArcToPoint(context2, minx, miny, midx, miny, radius);
-    CGContextAddArcToPoint(context2, maxx, miny, maxx, midy, radius);
-    CGContextAddArcToPoint(context2, maxx, maxy, midx, maxy, radius);
-    CGContextAddArcToPoint(context2, minx, maxy, minx, midy, radius);
-    CGContextClosePath(context2);
-    CGContextDrawPath(context2, kCGPathFillStroke);
-    CGContextFillPath(context2);
-    [button setBackgroundImage:UIGraphicsGetImageFromCurrentImageContext() forState:UIControlStateHighlighted];
-    UIGraphicsEndImageContext();
-    
-    button.titleLabel.font = [UIFont boldSystemFontOfSize:12];
-    [button setTitleColor:self.tintColor forState:UIControlStateNormal];
-    [button setTitleColor:[UIColor whiteColor] forState:UIControlStateHighlighted];
-    [button setTitle:NSLocalizedString(@"PLAY", nil) forState:UIControlStateNormal];
-    [button setTitle:NSLocalizedString(@"PLAY", nil) forState:UIControlStateHighlighted];
-    [button setTitleEdgeInsets:UIEdgeInsetsMake(2, 0, 0, 0)];
-    
-    [button addTarget:self action:@selector(onTapPlayButton:) forControlEvents:UIControlEventTouchUpInside];
-    
-    [self addSubview:button];
-    
-    UILabel* label = [[[UILabel alloc] init] autorelease];
-    label.tag = 101;
-    label.text = NSLocalizedString(@"LAST_PLAYED_SPOT", nil);
-    label.frame = CGRectMake(0, 0, 60, 16);
-    label.font = [UIFont systemFontOfSize:10];
-    label.textColor = [UIColor grayColor];
-    [self addSubview:label];
-  }
-  return self;
-}
-
-- (void)layoutSubviews
-{
-  [super layoutSubviews];
-  
-  CGSize size = self.contentView.frame.size;
-  UIButton* button = (UIButton*)[self viewWithTag:100];
-  UILabel* label = (UILabel*)[self viewWithTag:101];
-  
-  button.frame = (CGRect){size.width-button.frame.size.width-10, 22, button.frame.size};
-  self.imageView.frame = CGRectMake(16, 10, 57, 50);
-  self.imageView.backgroundColor = [UIColor whiteColor];
-  [self.textLabel setFont:[UIFont systemFontOfSize:14]];
-  [self.textLabel setTextColor:[UIColor blackColor]];
-  
-  [self.detailTextLabel setFont:[UIFont systemFontOfSize:12]];
-  [self.detailTextLabel setTextColor:self.tintColor];
-  [self.detailTextLabel setTextAlignment:NSTextAlignmentLeft];
-  self.textLabel.frame = CGRectMake(84, 10, size.width-80-10-(size.width-button.frame.origin.x), 30);
-  [label sizeToFit];
-  label.frame = CGRectMake(84, 40, label.frame.size.width, 16);
-  self.detailTextLabel.frame = CGRectMake(84+label.frame.size.width+5, 40, self.textLabel.frame.size.width-(label.frame.size.width+5), 16);
-  self.imageView.contentMode = UIViewContentModeScaleAspectFit;
-  self.backgroundColor = [UIColor clearColor];
-  self.separatorInset = UIEdgeInsetsMake(0, 16, 0, 0);
-}
-
-- (UIEdgeInsets)layoutMargins
-{
-  return UIEdgeInsetsMake(0, 0, 0, 0);
-}
-
-- (void)onTapPlayButton:(id)sender
-{
-  if ([(id <UITableViewDelegate>)[(UITableView *)self.superview.superview delegate] respondsToSelector:@selector(tableView:accessoryButtonTappedForRowWithIndexPath:)]) {
-    [(id <UITableViewDelegate>)[(UITableView *)self.superview.superview delegate] tableView:(UITableView *)self.superview.superview
-                                         accessoryButtonTappedForRowWithIndexPath:[(UITableView *)self.superview.superview indexPathForCell:self]];
-  }
-}
-
-@end
-
-#pragma mark -
-
-@interface LMROMImageView : UIImageView
-{
-  BOOL isFadeAnimating;
-}
-- (void)startFadeAnimating;
-- (void)stopFadeAnimating;
-
-@end
-
-@implementation LMROMImageView
-
-- (void)startFadeAnimating:(NSNumber*)index
-{
-  if ([self.animationImages count]>0) {
-    if ([index intValue]>0) {
-      CATransition* transition = [CATransition animation];
-      transition.duration = 2.0f;
-      transition.type = kCATransitionFade;
-      transition.removedOnCompletion = YES;
-      [self.layer addAnimation:transition forKey:nil];
-    }
-    int n = ([self.animationImages count]<=[index intValue]) ? 0 : [index intValue];
-    self.image = [self.animationImages objectAtIndex:n];
-    if ([self.animationImages count]>1 && isFadeAnimating) {
-      [self performSelector:@selector(startFadeAnimating:)
-                 withObject:[NSNumber numberWithInt:n+1]
-                 afterDelay:self.animationDuration/([self.animationImages count]-1)];
-    }
-  }
-}
-
-- (void)startFadeAnimating
-{
-  isFadeAnimating = YES;
-  [NSObject cancelPreviousPerformRequestsWithTarget:self];
-  if ([self.animationImages count]>0) {
-    [self startFadeAnimating:@0];
-  }
-}
-
-- (void)stopFadeAnimating
-{
-  isFadeAnimating = NO;
-  [NSObject cancelPreviousPerformRequestsWithTarget:self];
-}
-
-@end
-
-#pragma mark -
-
-@implementation LMROMBrowserController(UIViewController)
 
 - (id)initWithStyle:(UITableViewStyle)style
 {
-  self = [super initWithStyle:style];
+  self = [super init];
   if(self)
   {
     // Custom initialization
+    tableViewStyle = style;
   }
   return self;
 }
@@ -893,6 +881,13 @@ static int const LMFileOrganizationVersionNumber = 1;
 #ifdef LM_LOADING_SCREENSHOTS
   return;
 #endif
+  
+  UIView *view = [[UIView alloc] initWithFrame:[UIScreen mainScreen].applicationFrame];
+  _tableView = [[UITableView alloc] initWithFrame:view.bounds style:tableViewStyle];
+  _tableView.autoresizingMask = UIViewAutoresizingFlexibleWidth | UIViewAutoresizingFlexibleHeight;
+  _tableView.dataSource = self;
+  _tableView.delegate = self;
+  [view addSubview:_tableView];
   
   if(_detailsItem == nil)
   {
@@ -925,61 +920,62 @@ static int const LMFileOrganizationVersionNumber = 1;
   }
   else
   {
-    UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
-    if (navigationbar==nil) {
-      UINavigationBar* navigationbar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, -100, self.navigationController.navigationBar.frame.size.width, 100)];
-      navigationbar.tag = 1000;
-      navigationbar.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleWidth;
-      navigationbar.backgroundColor = [UIColor clearColor];
-      
-      LMROMImageView* imageview = [[LMROMImageView alloc] initWithFrame:CGRectMake(0, 0, self.navigationController.navigationBar.frame.size.width, 100)];
-      imageview.tag = 1001;
-      imageview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-      imageview.contentMode = UIViewContentModeScaleAspectFill;
-      imageview.clipsToBounds = YES;
-      imageview.layer.magnificationFilter = kCAFilterNearest;
-      [navigationbar addSubview:imageview];
-      [imageview release];
-      
-      UIImageView* gradientimageview = [[UIImageView alloc] initWithFrame:CGRectMake(0, 0, self.navigationController.navigationBar.frame.size.width, 100)];
-      gradientimageview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-      gradientimageview.contentMode = UIViewContentModeScaleAspectFill;
-      gradientimageview.clipsToBounds = YES;
-      UIGraphicsBeginImageContextWithOptions(CGSizeMake(gradientimageview.frame.size.width, gradientimageview.frame.size.height), NO, gradientimageview.image.scale);
-      CAGradientLayer *gradient = [CAGradientLayer layer];
-      UIColor *startColor = [UIColor colorWithWhite:0 alpha:0];
-      UIColor *endColor = [UIColor colorWithWhite:0 alpha:0.6];
-      gradient.frame = CGRectMake(0, 0, gradientimageview.frame.size.width, gradientimageview.frame.size.height);
-      gradient.colors = @[(id)startColor.CGColor,(id)endColor.CGColor];
-      gradient.startPoint = CGPointMake(0.0f, 1.0f);
-      gradient.endPoint = CGPointMake(1.0f, 1.0f);
-      [gradientimageview.layer insertSublayer:gradient atIndex:0];
-      [gradientimageview.layer renderInContext:UIGraphicsGetCurrentContext()];
-      gradientimageview.image = UIGraphicsGetImageFromCurrentImageContext();
-      UIGraphicsEndImageContext();
-      [gradient removeFromSuperlayer];
-      [navigationbar addSubview:gradientimageview];
-      [gradientimageview release];
-      
-      UILabel* label = [[UILabel alloc] initWithFrame:CGRectMake(10, 10, self.navigationController.navigationBar.frame.size.width-20, 80)];
-      label.tag = 1002;
-      label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
-      label.font = [UIFont fontWithName:@"Helvetica-Bold" size:22];
-      label.textColor = [UIColor whiteColor];
-      label.textAlignment = NSTextAlignmentRight;
-      label.numberOfLines = 2;
-      [navigationbar addSubview:label];
-      [label release];
-      
-      [self.navigationController.navigationBar insertSubview:navigationbar atIndex:0];
-      [navigationbar release];
-    }
+    UINavigationBar* navigationbar = [[UINavigationBar alloc] initWithFrame:CGRectMake(0, 0, view.frame.size.width, 100)];
+    navigationbar.tag = 1000;
+    navigationbar.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleWidth;
+    navigationbar.backgroundColor = [UIColor clearColor];
+    
+    LMROMImageView* imageview = [[LMROMImageView alloc] initWithFrame:CGRectMake(5, 5, view.frame.size.width-10, 90)];
+    imageview.tag = 1001;
+    imageview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    imageview.contentMode = UIViewContentModeScaleAspectFill;
+    imageview.clipsToBounds = YES;
+    imageview.layer.magnificationFilter = kCAFilterNearest;
+    [navigationbar addSubview:imageview];
+    [imageview release];
+    
+    UIImageView* gradientimageview = [[UIImageView alloc] initWithFrame:CGRectMake(5, 5, view.frame.size.width-10, 90)];
+    gradientimageview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    gradientimageview.contentMode = UIViewContentModeScaleAspectFill;
+    gradientimageview.clipsToBounds = YES;
+    UIGraphicsBeginImageContextWithOptions(CGSizeMake(gradientimageview.frame.size.width, gradientimageview.frame.size.height), NO, gradientimageview.image.scale);
+    CAGradientLayer *gradient = [CAGradientLayer layer];
+    UIColor *startColor = [UIColor colorWithWhite:0 alpha:0];
+    UIColor *endColor = [UIColor colorWithWhite:0 alpha:0.6];
+    gradient.frame = CGRectMake(0, 0, gradientimageview.frame.size.width, gradientimageview.frame.size.height);
+    gradient.colors = @[(id)startColor.CGColor,(id)endColor.CGColor];
+    gradient.startPoint = CGPointMake(0.0f, 1.0f);
+    gradient.endPoint = CGPointMake(1.0f, 1.0f);
+    [gradientimageview.layer insertSublayer:gradient atIndex:0];
+    [gradientimageview.layer renderInContext:UIGraphicsGetCurrentContext()];
+    gradientimageview.image = UIGraphicsGetImageFromCurrentImageContext();
+    UIGraphicsEndImageContext();
+    [gradient removeFromSuperlayer];
+    [navigationbar addSubview:gradientimageview];
+    [gradientimageview release];
+    
+    UILabel* label = [[UILabel alloc] initWithFrame:CGRectMake(15, 15, view.frame.size.width-30, 70)];
+    label.tag = 1002;
+    label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
+    label.font = [UIFont fontWithName:@"Helvetica-Bold" size:22];
+    label.textColor = [UIColor whiteColor];
+    label.textAlignment = NSTextAlignmentRight;
+    label.numberOfLines = 2;
+    [navigationbar addSubview:label];
+    [label release];
+    
+    [view addSubview:navigationbar];
+    [navigationbar release];
+    
     self.tableView.contentInset = UIEdgeInsetsMake(100, 0, 0, 0);
     self.tableView.scrollIndicatorInsets = UIEdgeInsetsMake(100, 0, 0, 0);
     [self.tableView registerClass:[UITableViewCell class] forCellReuseIdentifier:@"Cell"];
   }
   
-  self.clearsSelectionOnViewWillAppear = NO;
+  self.view = view;
+  [view release];
+  
+  //self.clearsSelectionOnViewWillAppear = NO;
   
   UIBarButtonItem* settingsButton = [[UIBarButtonItem alloc] initWithTitle:NSLocalizedString(@"SETTINGS", nil) style:UIBarButtonItemStyleBordered target:self action:@selector(LM_settingsTapped)];
   self.navigationItem.rightBarButtonItem = settingsButton;
@@ -1025,16 +1021,11 @@ static int const LMFileOrganizationVersionNumber = 1;
     [(UILabel*)self.tableView.tableFooterView setText:[NSString stringWithFormat:@"%d %@",[_romList count], NSLocalizedString(@"ROMS", nil)]];
   }
   
-  UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
+  UINavigationBar* navigationbar = (UINavigationBar*)[self.view viewWithTag:1000];
   if (navigationbar) {
     if(_detailsItem == nil) {
       LMROMImageView* imageview = (LMROMImageView*)[navigationbar viewWithTag:1001];
       [imageview stopFadeAnimating];
-      
-      [UIView animateWithDuration:0.3
-                       animations:^{
-                         navigationbar.frame = (CGRect){0, -navigationbar.frame.size.height-1, navigationbar.frame.size};
-                       }];
     }
     else {
       UILabel* label = (UILabel*)[navigationbar viewWithTag:1002];
@@ -1065,10 +1056,7 @@ static int const LMFileOrganizationVersionNumber = 1;
         imageview.image = nil;
       }
       
-      [UIView animateWithDuration:0.3
-                       animations:^{
-                         navigationbar.frame = (CGRect){0, self.navigationController.navigationBar.frame.size.height, navigationbar.frame.size};
-                       }];
+      navigationbar.frame = (CGRect){0, [UIApplication sharedApplication].statusBarFrame.size.height+self.navigationController.navigationBar.frame.size.height, navigationbar.frame.size};
     }
   }
 }
@@ -1076,8 +1064,8 @@ static int const LMFileOrganizationVersionNumber = 1;
 -(void)willAnimateRotationToInterfaceOrientation:(UIInterfaceOrientation)interfaceOrientation duration:(NSTimeInterval)duration
 {
   if(_detailsItem != nil) {
-    UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
-    navigationbar.frame = (CGRect){0, self.navigationController.navigationBar.frame.size.height, navigationbar.frame.size};
+    UINavigationBar* navigationbar = (UINavigationBar*)[self.view viewWithTag:1000];
+    navigationbar.frame = (CGRect){0, [UIApplication sharedApplication].statusBarFrame.size.height+self.navigationController.navigationBar.frame.size.height, navigationbar.frame.size};
   }
 }
 
@@ -1091,7 +1079,7 @@ static int const LMFileOrganizationVersionNumber = 1;
   [super viewWillDisappear:animated];
   
   if(_detailsItem != nil) {
-    UINavigationBar* navigationbar = (UINavigationBar*)[self.navigationController.navigationBar viewWithTag:1000];
+    UINavigationBar* navigationbar = (UINavigationBar*)[self.view viewWithTag:1000];
     LMROMImageView* imageview = (LMROMImageView*)[navigationbar viewWithTag:1001];
     [imageview stopFadeAnimating];
   }
@@ -1110,12 +1098,6 @@ static int const LMFileOrganizationVersionNumber = 1;
   else
     return YES;
 }
-
-@end
-
-#pragma mark -
-
-@implementation LMROMBrowserController(NSObject)
 
 - (void)dealloc
 {
@@ -1142,6 +1124,8 @@ static int const LMFileOrganizationVersionNumber = 1;
   _romPath = nil;
   [_sramPath release];
   _sramPath = nil;
+  
+  [_tableView release];
   
   [super dealloc];
 }

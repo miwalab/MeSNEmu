@@ -10,8 +10,11 @@
 
 @class LMFileListItem;
 
-@interface LMROMBrowserController : UITableViewController
+@interface LMROMBrowserController : UIViewController <UITableViewDelegate,UITableViewDataSource,UISearchDisplayDelegate>
 {
+  UITableViewStyle tableViewStyle;
+  UITableView* _tableView;
+  
   LMFileListItem* _detailsItem;
   NSString* _romPath;
   NSString* _sramPath;
@@ -25,6 +28,9 @@
   NSArray* _filteredSectionMarkers;
 }
 
+@property (nonatomic, retain) UITableView *tableView;
 @property (retain) LMFileListItem* detailsItem;
+
+- (id)initWithStyle:(UITableViewStyle)theStyle;
 
 @end
