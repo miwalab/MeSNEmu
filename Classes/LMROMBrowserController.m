@@ -160,20 +160,24 @@ static int const LMFileOrganizationVersionNumber = 1;
   UIButton* button = (UIButton*)[self viewWithTag:100];
   UILabel* label = (UILabel*)[self viewWithTag:101];
   
-  button.frame = (CGRect){size.width-button.frame.size.width-10, 22, button.frame.size};
-  self.imageView.frame = CGRectMake(16, 10, 57, 50);
-  self.imageView.backgroundColor = [UIColor whiteColor];
+  int spacing = 10.0f;
+  
+  button.frame = (CGRect){size.width-button.frame.size.width-spacing, 22, button.frame.size};
+  self.imageView.frame = CGRectMake(16, 10, 50, 50);
+  self.imageView.backgroundColor = [UIColor colorWithWhite:250/255.0 alpha:1.0];
+  self.imageView.layer.cornerRadius = 24.5f;
+  self.imageView.layer.masksToBounds = YES;
   [self.textLabel setFont:[UIFont systemFontOfSize:14]];
   [self.textLabel setTextColor:[UIColor blackColor]];
   
   [self.detailTextLabel setFont:[UIFont systemFontOfSize:12]];
   [self.detailTextLabel setTextColor:self.tintColor];
   [self.detailTextLabel setTextAlignment:NSTextAlignmentLeft];
-  self.textLabel.frame = CGRectMake(84, 10, size.width-80-10-(size.width-button.frame.origin.x), 30);
+  self.textLabel.frame = CGRectMake(self.imageView.frame.size.width+self.imageView.frame.origin.x+spacing, 10, size.width-self.imageView.frame.size.width-self.imageView.frame.origin.x-(spacing*2)-(size.width-button.frame.origin.x), 30);
   [label sizeToFit];
-  label.frame = CGRectMake(84, 40, label.frame.size.width, 16);
-  self.detailTextLabel.frame = CGRectMake(84+label.frame.size.width+5, 40, self.textLabel.frame.size.width-(label.frame.size.width+5), 16);
-  self.imageView.contentMode = UIViewContentModeScaleAspectFit;
+  label.frame = CGRectMake(self.textLabel.frame.origin.x, 40, label.frame.size.width, 16);
+  self.detailTextLabel.frame = CGRectMake(self.textLabel.frame.origin.x+label.frame.size.width+(spacing/2), 40, self.textLabel.frame.size.width-(label.frame.size.width+(spacing/2)), 16);
+  self.imageView.contentMode = UIViewContentModeScaleAspectFill;
   self.backgroundColor = [UIColor clearColor];
   self.separatorInset = UIEdgeInsetsMake(0, 16, 0, 0);
 }
@@ -835,7 +839,7 @@ static int const LMFileOrganizationVersionNumber = 1;
     [label setText:[self tableView: tableView titleForHeaderInSection: section]];
     [label setFont:[UIFont boldSystemFontOfSize:14]];
     [label setTextColor:[UIColor grayColor]];
-    [view setBackgroundColor:[UIColor colorWithWhite:250/255.0 alpha:1.0]];
+    [view setBackgroundColor:[UIColor colorWithWhite:250/255.0 alpha:0.98]];
     [view addSubview:label];
     [label release];
     return view;
