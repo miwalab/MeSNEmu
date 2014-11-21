@@ -929,18 +929,22 @@ static int const LMFileOrganizationVersionNumber = 1;
     navigationbar.autoresizingMask = UIViewAutoresizingFlexibleBottomMargin|UIViewAutoresizingFlexibleWidth;
     navigationbar.backgroundColor = [UIColor clearColor];
     
-    LMROMImageView* imageview = [[LMROMImageView alloc] initWithFrame:CGRectMake(5, 5, view.frame.size.width-10, 90)];
+    LMROMImageView* imageview = [[LMROMImageView alloc] initWithFrame:CGRectMake(10, 0, view.frame.size.width-20, 90)];
     imageview.tag = 1001;
     imageview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     imageview.contentMode = UIViewContentModeScaleAspectFill;
+    imageview.layer.cornerRadius = 3.0f;
+    imageview.layer.masksToBounds = YES;
     imageview.clipsToBounds = YES;
     imageview.layer.magnificationFilter = kCAFilterNearest;
     [navigationbar addSubview:imageview];
     [imageview release];
     
-    UIImageView* gradientimageview = [[UIImageView alloc] initWithFrame:CGRectMake(5, 5, view.frame.size.width-10, 90)];
+    UIImageView* gradientimageview = [[UIImageView alloc] initWithFrame:CGRectMake(10, 0, view.frame.size.width-20, 90)];
     gradientimageview.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     gradientimageview.contentMode = UIViewContentModeScaleAspectFill;
+    gradientimageview.layer.cornerRadius = 3.0f;
+    gradientimageview.layer.masksToBounds = YES;
     gradientimageview.clipsToBounds = YES;
     UIGraphicsBeginImageContextWithOptions(CGSizeMake(gradientimageview.frame.size.width, gradientimageview.frame.size.height), NO, gradientimageview.image.scale);
     CAGradientLayer *gradient = [CAGradientLayer layer];
@@ -958,7 +962,7 @@ static int const LMFileOrganizationVersionNumber = 1;
     [navigationbar addSubview:gradientimageview];
     [gradientimageview release];
     
-    UILabel* label = [[UILabel alloc] initWithFrame:CGRectMake(15, 15, view.frame.size.width-30, 70)];
+    UILabel* label = [[UILabel alloc] initWithFrame:CGRectMake(20, 10, view.frame.size.width-40, 70)];
     label.tag = 1002;
     label.autoresizingMask = UIViewAutoresizingFlexibleWidth;
     label.font = [UIFont fontWithName:@"Helvetica-Bold" size:22];
@@ -1021,8 +1025,27 @@ static int const LMFileOrganizationVersionNumber = 1;
     });
   }
   
+  __block UIImageView*(^findHairlineImageViewUnder)(UIView*) = ^UIImageView*(UIView*view){
+    if ([view isKindOfClass:UIImageView.class] && view.bounds.size.height <= 1.0) {
+      return (UIImageView *)view;
+    }
+    for (UIView *subview in view.subviews) {
+      UIImageView *imageView = findHairlineImageViewUnder(subview);
+      if (imageView) {
+        return imageView;
+      }
+    }
+    return nil;
+  };
+  
   if(_detailsItem == nil) {
+    UIImageView *navBarHairlineImageView = findHairlineImageViewUnder(self.navigationController.navigationBar);
+    navBarHairlineImageView.alpha = 1.0;
+    
     [(UILabel*)self.tableView.tableFooterView setText:[NSString stringWithFormat:@"%d %@",[_romList count], NSLocalizedString(@"ROMS", nil)]];
+  } else {
+    UIImageView *navBarHairlineImageView = findHairlineImageViewUnder(self.navigationController.navigationBar);
+    navBarHairlineImageView.alpha = 0.0;
   }
   
   UINavigationBar* navigationbar = (UINavigationBar*)[self.view viewWithTag:1000];
