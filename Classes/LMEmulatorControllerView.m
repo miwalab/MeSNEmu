@@ -329,7 +329,7 @@
   {
     _pixelView.alpha = 1.0;
     controlsAlpha = 0;
-    bcolor = blackColor;
+    bcolor = [UIColor blackColor];
   }
   else if(_viewMode == LMEmulatorControllerViewModeControllerOnly)
   {
@@ -342,6 +342,8 @@
   }
   
   self.backgroundColor = bcolor;
+  _optionsButton.alpha = controlsAlpha;
+  _cheatButton.alpha = controlsAlpha;
   _startButton.alpha = controlsAlpha;
   _selectButton.alpha = controlsAlpha;
   _leftButtonView.alpha = controlsAlpha;

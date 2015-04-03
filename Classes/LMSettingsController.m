@@ -26,6 +26,8 @@ NSString* const kLMSettingsSound = @"Sound";
 NSString* const kLMSettingsAutoFrameskip = @"AutoFrameskip";
 NSString* const kLMSettingsFrameskipValue = @"FrameskipValue";
 
+NSString* const kLMEmulatorPortName = @"MeSNEmu";
+
 typedef enum _LMSettingsSections
 {
   LMSettingsSectionScreen,
@@ -193,7 +195,12 @@ typedef enum _LMSettingsSections
       return 3;
   }
   else if(section == LMSettingsSectionAbout)
-    return 3;
+  {
+    NSString* bundleName = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString*)kCFBundleNameKey];
+    if([bundleName isEqualToString:kLMEmulatorPortName] == YES)
+      return 3;
+    return 2;
+  }
   return 0;
 }
 
@@ -219,35 +226,16 @@ typedef enum _LMSettingsSections
       cell.textLabel.text = NSLocalizedString(@"BLUETOOTH_CONTROLLER", nil);
       NSString* controllerName = nil;
       LMBTControllerType bluetoothControllerType = [[NSUserDefaults standardUserDefaults] integerForKey:kLMSettingsBluetoothController];
-      switch(bluetoothControllerType)
+      
+      for(NSArray* controller in [LMBTControllerView supportedControllers])
       {
-        case LMBTControllerType_Custom:
-          controllerName = NSLocalizedString(@"CUSTOM", nil);
+        if([[controller objectAtIndex:1] intValue] == bluetoothControllerType)
+        {
+          controllerName = [controller objectAtIndex:0];
           break;
-        case LMBTControllerType_EXHybrid:
-          controllerName = @"EX Hybrid";
-          break;
-        case LMBTControllerType_iCade:
-          controllerName = @"iCade";
-          break;
-        case LMBTControllerType_iCade8Bitty:
-          controllerName = @"iCade 8-Bitty";
-          break;
-        case LMBTControllerType_SteelSeriesFree:
-          controllerName = @"SteelSeries Free";
-          break;
-        case LMBTControllerType_iMpulse:
-          controllerName = @"iMpulse";
-          break;
-        case LMBTControllerType_8BitdoFC30:
-          controllerName = @"8Bitdo FC30";
-          break;
-        case LMBTControllerType_8BitdoNES30:
-          controllerName = @"8Bitdo NES30";
-          break;
-        default:
-          break;
+        }
       }
+      
       cell.detailTextLabel.text = controllerName;
     }
   }
@@ -310,9 +298,15 @@ typedef enum _LMSettingsSections
     if(row == 0)
     {
       cell.textLabel.text = NSLocalizedString(@"VERSION", nil);
+      NSString* versionString = [NSString stringWithFormat:@"(%s)", __DATE__];
+      NSString* bundleName = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString*)kCFBundleNameKey];
+      if([bundleName isEqualToString:kLMEmulatorPortName] == YES)
+      {
+        versionString = [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString*)kCFBundleVersionKey];
+      }
       cell.detailTextLabel.text = [NSString stringWithFormat:@"%@ %@",
-                                   [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString*)kCFBundleNameKey],
-                                   [[NSBundle mainBundle] objectForInfoDictionaryKey:(NSString*)kCFBundleVersionKey]];
+                                   kLMEmulatorPortName,
+                                   versionString];
     }
     else if(row == 1)
     {
@@ -339,27 +333,17 @@ typedef enum _LMSettingsSections
       LMMultipleChoicePicker* c = [[LMMultipleChoicePicker alloc] initWithStyle:UITableViewStyleGrouped];
       c.title = NSLocalizedString(@"BLUETOOTH_CONTROLLER", nil);
       
-      // TODO: custom is obviously wrong here
-      c.optionNames = @[
-                        @"iCade",
-                        @"iCade 8-Bitty",
-                        @"EX Hybrid",
-                        @"SteelSeries Free",
-                        @"8Bitdo FC30",
-                        @"8Bitdo NES30",
-                        @"iMpulse"/*,
-                        NSLocalizedString(@"CUSTOM", nil)*/
-                        ];
-      c.optionValues = @[
-                         [NSNumber numberWithInt:LMBTControllerType_iCade],
-                         [NSNumber numberWithInt:LMBTControllerType_iCade8Bitty],
-                         [NSNumber numberWithInt:LMBTControllerType_EXHybrid],
-                         [NSNumber numberWithInt:LMBTControllerType_SteelSeriesFree],
-                         [NSNumber numberWithInt:LMBTControllerType_8BitdoFC30],
-                         [NSNumber numberWithInt:LMBTControllerType_8BitdoNES30],
-                         [NSNumber numberWithInt:LMBTControllerType_iMpulse]/*,
-                         [NSNumber numberWithInt:LMBTControllerType_Custom]*/
-                        ];
+      // building the option names and values for the controllers
+      NSMutableArray* optionNames = [NSMutableArray array];
+      NSMutableArray* optionValues = [NSMutableArray array];
+      for(NSArray* controller in [LMBTControllerView supportedControllers])
+      {
+        [optionNames addObject:[controller firstObject]];
+        [optionValues addObject:[controller objectAtIndex:1]];
+      }
+      c.optionNames = optionNames;
+      c.optionValues = optionValues;
+      
       LMBTControllerType controllerType = [[NSUserDefaults standardUserDefaults] integerForKey:kLMSettingsBluetoothController];
       for(int i=0; i<[c.optionValues count]; i++)
       {
